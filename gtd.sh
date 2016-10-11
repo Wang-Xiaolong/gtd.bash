@@ -167,6 +167,14 @@ function view_stuff() {  #$1 is id or alias
 		echo "$1 not found."
 		return
 	fi
+	if [ "$verbose" == true ]; then
+		if [ -z $(command -v view) ]; then  #check cmd 'view' exist
+			echo "No 'view' command, just do simple view."
+		else
+			view $path
+			return
+		fi
+	fi 
 	print_file_info "[%i] created@%ct  updated@%ut" "$path"
 	printf '%0.s-' $(seq 1 $(tput cols))  #print a separate line
   	cat "$path" 
