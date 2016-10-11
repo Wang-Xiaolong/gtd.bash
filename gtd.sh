@@ -180,6 +180,19 @@ function view_stuff() {  #$1 is id or alias
   	cat "$path" 
 }
 
+function edit_stuff() {  #$1 is id or alias
+	path=$(get_file $1)
+	if [ -z "$path" ]; then
+		echo "$1 not found."
+		return
+	fi
+	if [ -z $(command -v vim) ]; then
+		echo "No vim, can't edit $1."
+		return
+	fi
+	vim $path
+}
+
 #Main: process args
 if [ $# -eq 0 ]; then  #No arg, show usage
 	usage
@@ -199,6 +212,7 @@ case "$1" in  #$1 is command
 	add|a) add_stuff;;
 	list|l) list_stuff;;
 	view|v) view_stuff $2;;
+	edit|e) edit_stuff $2;;
 	install) echo "Install!";;
 	help|-h|--help|-?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
