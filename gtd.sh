@@ -162,14 +162,14 @@ function get_file() {  #$1 is id or alias
 }
 
 function view_stuff() {  #$1 is id or alias
-	filepath=$(get_file $1)
-	if [ -z "$filepath" ]; then
+	path=$(get_file $1)
+	if [ -z "$path" ]; then
 		echo "$1 not found."
 		return
 	fi
-	# file info and content together view with 'less' command
-	(print_file_info "[%i] created@%ct  updated@%ut" "$filepath"; \
-	  cat "$filepath") | less
+	print_file_info "[%i] created@%ct  updated@%ut" "$path"
+	printf '%0.s-' $(seq 1 $(tput cols))  #print a separate line
+  	cat "$path" 
 }
 
 #Main: process args
