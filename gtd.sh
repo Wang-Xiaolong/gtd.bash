@@ -77,9 +77,7 @@ function get_max_id_in_dir() {
 			fi
 		else
 			fn=$(basename "${file}")
-			if [ "$fn" == "*" ]; then
-				continue
-			fi
+			[ "$fn" == "*" ] && continue
 			id_str=$(get_id_from_fn "$fn")
 			if [ $(($id_str+0)) -gt $max_id ]; then
 				max_id=$(($id_str+0))
@@ -155,14 +153,10 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 	for file in "$1"/*; do
 		if [ -d "${file}" ]; then
 			result=$(get_file_in_dir "${file}" $2)
-			if [ ! -z $result ]; then
-				break
-			fi
+			[ ! -z $result ] && break
 		else
 			fn=$(basename "${file}")
-			if [ "$fn" == "*" ]; then
-				continue
-			fi
+			[ "$fn" == "*" ] && continue
 			id_str=$(get_id_from_fn "$fn")
 			if [ "$id_str" == "$2" ]; then
 				result=$file
@@ -179,10 +173,7 @@ function get_file() {  #$1 is id or alias
 
 function remove_stuff() { #$1 is id or alias
 	path=$(get_file $1)
-	if [ -z "$path" ]; then
-		echo "$1 not found."
-		return
-	fi
+	[ -z "$path" ] && echo "$1 not found." && return
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
 }
 
@@ -204,10 +195,7 @@ function view_stuff() {  #$1 is id or alias
 
 function edit_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
-	if [ -z "$path" ]; then
-		echo "$1 not found."
-		return
-	fi
+	[ -z "$path" ] && echo "$1 not found." && return
 	if [ -z $(command -v vim) ]; then
 		echo "No vim, can't edit $1."
 		return
