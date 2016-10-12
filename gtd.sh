@@ -190,10 +190,7 @@ function remove_stuff() { #$1 is id or alias
 
 function view_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
-	if [ -z "$path" ]; then
-		echo "$1 not found."
-		return
-	fi
+	[ -z "$path" ] && echo "$1 not found." && return
 	if [ "$verbose" == true ]; then
 		if [ -z $(command -v view) ]; then  #check cmd 'view' exist
 			echo "No 'view' command, just do simple view."
