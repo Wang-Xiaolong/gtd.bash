@@ -138,7 +138,7 @@ function print_file_info() {  #$1 is format, $2 is path
 }
 
 function list_stuff() {  #$1 is dir
-	[ $showhelp == true ] && (usage_list; exit 0)
+	[ $showhelp == true ] && usage_list
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
 		path="$1/$fn"
@@ -247,9 +247,7 @@ function install() {
 }
 
 #Main: process args
-if [ $# -eq 0 ]; then  #No arg, show usage
-	usage
-fi
+[ $# -eq 0 ] && usage  #No arg, show usage
 
 for arg in "$@"; do  #general flag: --help/debug/version/verbose
 	case $arg in
