@@ -108,6 +108,23 @@ function add_stuff() {
 	echo "$new_id created."
 }
 
+function usage_list {  #heredoc
+	cat<<-EOF
+Usage: gtd <list-command> [options]
+The stuff type to be listed are embedded in the list-command,
+the following commands are supported:
+  list           =l
+  list-todo      =lt
+  list-wait      =lw
+  list-project   =lp
+  list-log       =ll
+  list-reference =lr
+  list-someday   =ls
+  list-trash
+	EOF
+	exit 0
+}
+
 function print_file_info() {  #$1 is format, $2 is path
 	str=$1
 	fn=$(basename "$2")
@@ -121,6 +138,7 @@ function print_file_info() {  #$1 is format, $2 is path
 }
 
 function list_stuff() {  #$1 is dir
+	[ $showhelp == true ] && (usage_list; exit 0)
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
 		path="$1/$fn"
