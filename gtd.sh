@@ -56,6 +56,21 @@ function check_and_make_dirs() {  #make gtd dirs
 	check_and_make_dir "$GTD_TRASH"
 }
 
+function usage_add() {  #heredoc
+	cat<<-EOF
+usage: gtd <add-command> [options...]
+  add-command
+    add,           a
+    add-todo,      at
+    add-wait,      aw
+    add-project,   ap
+    add-log,       al
+    add-reference, ar
+    add-someday,   as
+	EOF
+	exit 0
+}
+
 function get_id_from_fn() {  #light func just to get id, $1 is file base name
 	id_str=$(echo "$1" | sed -e "s/\..*//g")  #remove chars after dots
 	re='^[0-9]+$'  #check if id is num w/ regular expression
@@ -92,6 +107,7 @@ function get_max_id() {
 }
 
 function add_stuff() {
+	[ "$showhelp" == true ] && usage_add
 	check_and_make_dirs
 	echo "Any stuff, please (ctrl-d end, ctrl-c cancel):"
 	input=$(cat)  #save keyin until eof
