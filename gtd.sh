@@ -212,12 +212,14 @@ Usually need sudo or root permission.
 	exit 0
 }
 
+INSTALL_DEST=/usr/local/bin/gtd
+
 function install() {
 	if [ "$showhelp" == true ]; then
 		usage_install
 	fi
 	debug "cmd=$0"
-	if [ "$0" == "/usr/local/bin/gtd" ]; then
+	if [ "$0" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
 		return
 	fi
@@ -225,7 +227,7 @@ function install() {
 		echo "I just can't locate the script at $0"
 		exit 1
 	fi
-	cp $0 /usr/local/bin/gtd
+	cp -i $0 $INSTALL_DEST
 }
 
 #Main: process args
@@ -250,6 +252,7 @@ case "$1" in  #$1 is command
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
 	install) install;;
+	uninstall) echo "Please just manually remove $INSTALL_DEST.";;
 	help|-h|--help|-?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
 esac
