@@ -233,9 +233,7 @@ Usually need sudo or root permission.
 INSTALL_DEST=/usr/local/bin/gtd
 
 function install() {
-	if [ "$showhelp" == true ]; then
-		usage_install
-	fi
+	[ "$showhelp" == true ] && usage_install
 	debug "cmd=$0"
 	if [ "$0" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
