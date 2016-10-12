@@ -21,9 +21,7 @@ The most commonly used gtd commands are:
 
 debug=false
 function debug() {
-	if [ "$debug" = true ] ; then
-		>&2 echo "$@"
-	fi
+	[ "$debug" == true ] && >&2 echo "$@"
 }
 
 showhelp=false
