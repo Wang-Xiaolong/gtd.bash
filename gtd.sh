@@ -238,8 +238,8 @@ fi
 for arg in "$@"; do  #general flag: --help/debug/version/verbose
 	case $arg in
 		--debug) debug=true;;
-		--help|-h|-?) showhelp=true;;
-		--verbose|'-v') verbose=true;;
+		--help|-h|-\?) showhelp=true;;
+		--verbose|-v) verbose=true;;
 		--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
 			exit 0 ;;
 	esac
@@ -253,6 +253,6 @@ case "$1" in  #$1 is command
 	edit|e) edit_stuff $2;;
 	install) install;;
 	uninstall) echo "Please just manually remove $INSTALL_DEST.";;
-	help|-h|--help|-?) usage;;
+	help|-h|--help|-\?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
 esac
