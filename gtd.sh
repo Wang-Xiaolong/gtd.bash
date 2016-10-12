@@ -111,6 +111,15 @@ function add_stuff() {  #$1 is dir
 	check_and_make_dirs
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
+	if [ $verbose == true ]; then
+		if [ -z $(command -v vim) ]; then
+			echo "No vim, just simply."
+		else
+			vim $path
+			[ -f "$path" ] && echo "$new_id created."
+			return
+		fi
+	fi
 	echo "Any stuff, please (ctrl-d end, ctrl-c cancel):"
 	input=$(cat)  #save keyin until eof
 	if [ -z `echo $input | tr -d '[:space:]'` ]; then  #empty check
