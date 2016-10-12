@@ -122,17 +122,16 @@ function add_stuff() {
 
 function usage_list {  #heredoc
 	cat<<-EOF
-Usage: gtd <list-command> [options]
-The stuff type to be listed are embedded in the list-command,
-the following commands are supported:
-  list           =l
-  list-todo      =lt
-  list-wait      =lw
-  list-project   =lp
-  list-log       =ll
-  list-reference =lr
-  list-someday   =ls
-  list-trash
+Usage: gtd <list-command> [options...]
+  list-command
+    list,           l
+    list-todo,      lt
+    list-wait,      lw
+    list-project,   lp
+    list-log,       ll
+    list-reference, lr
+    list-someday,   ls
+    list-trash
 	EOF
 	exit 0
 }
