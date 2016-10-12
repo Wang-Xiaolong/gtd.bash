@@ -106,17 +106,18 @@ function get_max_id() {
 	get_max_id_in_dir "$GTD_ROOT"
 }
 
-function add_stuff() {
+function add_stuff() {  #$1 is dir
 	[ "$showhelp" == true ] && usage_add
 	check_and_make_dirs
+	new_id=$(($(get_max_id) + 1))
+	path="$1/$new_id.$(date +%s)"
 	echo "Any stuff, please (ctrl-d end, ctrl-c cancel):"
 	input=$(cat)  #save keyin until eof
 	if [ -z `echo $input | tr -d '[:space:]'` ]; then  #empty check
 		echo "Nothing!"
 		return
 	fi
-	new_id=$(($(get_max_id) + 1))
-	echo "$input" > "$GTD_INBOX/$new_id.$(date +%s)"
+	echo "$input" > "$path"
 	echo "$new_id created."
 }
 
@@ -258,7 +259,7 @@ for arg in "$@"; do  #general flag: --help/debug/version/verbose
 done
 
 case "$1" in  #$1 is command
-	add|a) add_stuff;;
+	add|a) add_stuff "$GTD_INBOX";;
 	remove|rm|delete|del) remove_stuff $2;;
 	list|l) list_stuff $GTD_INBOX;;
 	list-trash) list_stuff $GTD_TRASH;;
