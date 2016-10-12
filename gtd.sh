@@ -161,6 +161,15 @@ function get_file() {  #$1 is id or alias
 	get_file_in_dir "$GTD_ROOT" "$1"
 }
 
+function remove_stuff() { #$1 is id or alias
+	path=$(get_file $1)
+	if [ -z "$path" ]; then
+		echo "$1 not found."
+		return
+	fi
+	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
+}
+
 function view_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
 	if [ -z "$path" ]; then
@@ -203,7 +212,6 @@ Usually need sudo or root permission.
 	exit 0
 }
 
-
 function install() {
 	if [ "$showhelp" == true ]; then
 		usage_install
@@ -237,6 +245,7 @@ done
 
 case "$1" in  #$1 is command
 	add|a) add_stuff;;
+	remove|rm|delete|del) remove_stuff $2;;
 	list|l) list_stuff;;
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
