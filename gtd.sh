@@ -120,10 +120,10 @@ function print_file_info() {  #$1 is format, $2 is path
 	echo "$str"
 }
 
-function list_stuff() {
+function list_stuff() {  #$1 is dir
 	check_and_make_dirs
-	for fn in $(ls "$GTD_INBOX/" | sort -n -t '.' -k 1); do
-		path="$GTD_INBOX/$fn"
+	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
+		path="$1/$fn"
 		if [ "$verbose" == true ]; then  #id, create/update time
 			print_file_info "[%i] created@%ct  updated@%ut" "$path"
 			echo "$(cat "$path")"  # and content
@@ -241,14 +241,14 @@ for arg in "$@"; do  #general flag: --help/debug/version/verbose
 		--help|-h|-\?) showhelp=true;;
 		--verbose|-v) verbose=true;;
 		--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
-			exit 0 ;;
+			exit 0;;
 	esac
 done
 
 case "$1" in  #$1 is command
 	add|a) add_stuff;;
 	remove|rm|delete|del) remove_stuff $2;;
-	list|l) list_stuff;;
+	list|l) list_stuff $GTD_INBOX;;
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
 	install) install;;
