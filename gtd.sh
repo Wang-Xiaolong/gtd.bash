@@ -249,6 +249,7 @@ case "$1" in  #$1 is command
 	add|a) add_stuff;;
 	remove|rm|delete|del) remove_stuff $2;;
 	list|l) list_stuff $GTD_INBOX;;
+	list-trash) list_stuff $GTD_TRASH;;
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
 	install) install;;
