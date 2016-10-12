@@ -193,6 +193,33 @@ function edit_stuff() {  #$1 is id or alias
 	vim $path
 }
 
+function usage_install() {  #heredoc
+	cat<<-EOF
+Install gtd.sh to /usr/local/bin to make it a command.
+Only to be used with the script that's not installed.
+(I mean you can't install 'gtd' command with 'gtd' command).
+Usually need sudo or root permission.
+	EOF
+	exit 0
+}
+
+
+function install() {
+	if [ "$showhelp" == true ]; then
+		usage_install
+	fi
+	debug "cmd=$0"
+	if [ "$0" == "/usr/local/bin/gtd" ]; then
+		echo "You are already using the installed command."
+		return
+	fi
+	if [ ! -f "$0" ]; then
+		echo "I just can't locate the script at $0"
+		exit 1
+	fi
+	cp $0 /usr/local/bin/gtd
+}
+
 #Main: process args
 if [ $# -eq 0 ]; then  #No arg, show usage
 	usage
@@ -213,7 +240,7 @@ case "$1" in  #$1 is command
 	list|l) list_stuff;;
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
-	install) echo "Install!";;
+	install) install;;
 	help|-h|--help|-?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
 esac
