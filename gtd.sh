@@ -157,7 +157,7 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 	for file in "$1"/*; do
 		if [ -d "${file}" ]; then
 			result=$(get_file_in_dir "${file}" $2)
-			if [ ! -z result ]; then
+			if [ ! -z $result ]; then
 				break
 			fi
 		else
