@@ -21,7 +21,7 @@ The most commonly used gtd commands are:
 
 debug=false
 function debug() {
-	[ "$debug" == true ] && >&2 echo "$@"
+	[ $debug == true ] && >&2 echo "$@"
 }
 
 showhelp=false
@@ -107,7 +107,7 @@ function get_max_id() {
 }
 
 function add_stuff() {  #$1 is dir
-	[ "$showhelp" == true ] && usage_add
+	[ $showhelp == true ] && usage_add
 	check_and_make_dirs
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
@@ -163,7 +163,7 @@ function list_stuff() {  #$1 is dir
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
 		path="$1/$fn"
-		if [ "$verbose" == true ]; then  #id, create/update time
+		if [ $verbose == true ]; then  #id, create/update time
 			print_file_info "[%i] created@%ct  updated@%ut" "$path"
 			echo "$(cat "$path")"  # and content
 		else  #brief: just id and the 1st line
@@ -214,7 +214,7 @@ function remove_stuff() { #$1 is id or alias
 function view_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
-	if [ "$verbose" == true ]; then
+	if [ $verbose == true ]; then
 		if [ -z $(command -v view) ]; then  #check cmd 'view' exist
 			echo "No 'view' command, just do simple view."
 		else
@@ -250,7 +250,7 @@ Usually need sudo or root permission.
 INSTALL_DEST=/usr/local/bin/gtd
 
 function install() {
-	[ "$showhelp" == true ] && usage_install
+	[ $showhelp == true ] && usage_install
 	debug "cmd=$0"
 	if [ "$0" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
