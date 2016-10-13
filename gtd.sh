@@ -11,10 +11,13 @@ usage:
 
 The most commonly used gtd commands are:
   add
-  show
+  remove
+  view
   edit
-  install
-  uninstall		
+  list
+  move
+  set
+  unset
 	EOF
 }
 
@@ -61,13 +64,16 @@ function usage_add() {  #heredoc
 	cat<<-EOF
 usage: gtd <add-command> [options...]
   add-command
-    add,           a
-    add-todo,      at
-    add-wait,      aw
-    add-project,   ap
-    add-log,       al
-    add-reference, ar
-    add-someday,   as
+    add,           a   Add to the Inbox
+    add-todo,      at  Add to the Todo List
+    add-wait,      aw  Add to the Waiting List
+    add-project,   ap  Add to the Projects
+    add-log,       al  Add to the Logs
+    add-reference, ar  Add to the Reference library
+    add-someday,   as  Add to the Someday-Maybe items
+  options
+    --help,        -h  Display this documentation
+    --verbose,     -v  Open vim to facilitate complex editing
 	EOF
 }
 
@@ -130,7 +136,7 @@ function add_stuff() {  #$1 is dir
 #=== REMOVE ===================================================================
 function usage_remove {  #heredoc
 	cat<<-EOF
-Usage: gtd <remove-command> [options...]
+Usage: gtd <remove-command> [options...] <id or alias>
   remove-command(with the same meaning): remove, delete, rm, del
 	EOF
 }
@@ -264,7 +270,7 @@ function install() {
 #=== SHELL ====================================================================
 function usage_shell() {  #heredoc
 	cat<<-EOF
-Shell-like environment, that you can run gtd commands without typing 'gtd'.
+Shell-like environment, where you can run gtd commands without typing 'gtd'.
 	EOF
 }
 
