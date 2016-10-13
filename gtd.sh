@@ -101,10 +101,7 @@ function get_max_id_in_dir() {
 	done
 	echo $max_id  #return value!
 }
-
-function get_max_id() {
-	get_max_id_in_dir "$GTD_ROOT"
-}
+function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function add_stuff() {  #$1 is dir
 	[ $showhelp == true ] && usage_add && return
@@ -156,10 +153,7 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 	done
 	echo "$result"  #return value!
 }
-
-function get_file() {  #$1 is id or alias
-	get_file_in_dir "$GTD_ROOT" "$1"
-}
+function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
 function remove_stuff() { #$1 is id or alias
 	[ $showhelp == true ] && usage_remove && return
