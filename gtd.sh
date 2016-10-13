@@ -128,48 +128,6 @@ function add_stuff() {  #$1 is dir
 	echo "$new_id created."
 }
 
-function usage_list {  #heredoc
-	cat<<-EOF
-Usage: gtd <list-command> [options...]
-  list-command
-    list,           l
-    list-todo,      lt
-    list-wait,      lw
-    list-project,   lp
-    list-log,       ll
-    list-reference, lr
-    list-someday,   ls
-    list-trash
-	EOF
-}
-
-function print_file_info() {  #$1 is format, $2 is path
-	str=$1
-	fn=$(basename "$2")
-	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
-	str=$(echo "$str" | sed -r "s/%i/${PARTS[0]}/g")
-	create_time=$(date --date="@${PARTS[1]}" "+%F %H:%M")
-	str=$(echo "$str" | sed -r "s/%ct/$create_time/g")
-	update_time="$(date "+%F %H:%M" -r "$2")"
-	str=$(echo "$str" | sed -r "s/%ut/$update_time/g")
-	echo "$str"
-}
-
-function list_stuff() {  #$1 is dir
-	[ $showhelp == true ] && usage_list && return
-	check_and_make_dirs
-	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
-		path="$1/$fn"
-		if [ $verbose == true ]; then  #id, create/update time
-			print_file_info "[%i] created@%ct  updated@%ut" "$path"
-			echo "$(cat "$path")"  # and content
-		else  #brief: just id and the 1st line
-			echo -e "[$(get_id_from_fn "$fn")]\t" \
-			  "$(head -n 1 "$path")"
-		fi
-	done
-}
-
 function get_file_in_dir() {  #$1 is path, $2 is id or alias
 	result=""
 	for file in "$1"/*; do
@@ -207,6 +165,28 @@ function remove_stuff() { #$1 is id or alias
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
 }
 
+function edit_stuff() {  #$1 is id or alias
+	path=$(get_file $1)
+	[ -z "$path" ] && echo "$1 not found." && return
+	if [ -z $(command -v vim) ]; then
+		echo "No vim, can't edit $1."
+		return
+	fi
+	vim $path
+}
+
+function print_file_info() {  #$1 is format, $2 is path
+	str=$1
+	fn=$(basename "$2")
+	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
+	str=$(echo "$str" | sed -r "s/%i/${PARTS[0]}/g")
+	create_time=$(date --date="@${PARTS[1]}" "+%F %H:%M")
+	str=$(echo "$str" | sed -r "s/%ct/$create_time/g")
+	update_time="$(date "+%F %H:%M" -r "$2")"
+	str=$(echo "$str" | sed -r "s/%ut/$update_time/g")
+	echo "$str"
+}
+
 function view_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
@@ -223,14 +203,34 @@ function view_stuff() {  #$1 is id or alias
   	cat "$path" 
 }
 
-function edit_stuff() {  #$1 is id or alias
-	path=$(get_file $1)
-	[ -z "$path" ] && echo "$1 not found." && return
-	if [ -z $(command -v vim) ]; then
-		echo "No vim, can't edit $1."
-		return
-	fi
-	vim $path
+function usage_list {  #heredoc
+	cat<<-EOF
+Usage: gtd <list-command> [options...]
+  list-command
+    list,           l
+    list-todo,      lt
+    list-wait,      lw
+    list-project,   lp
+    list-log,       ll
+    list-reference, lr
+    list-someday,   ls
+    list-trash
+	EOF
+}
+
+function list_stuff() {  #$1 is dir
+	[ $showhelp == true ] && usage_list && return
+	check_and_make_dirs
+	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
+		path="$1/$fn"
+		if [ $verbose == true ]; then  #id, create/update time
+			print_file_info "[%i] created@%ct  updated@%ut" "$path"
+			echo "$(cat "$path")"  # and content
+		else  #brief: just id and the 1st line
+			echo -e "[$(get_id_from_fn "$fn")]\t" \
+			  "$(head -n 1 "$path")"
+		fi
+	done
 }
 
 function usage_install() {  #heredoc
