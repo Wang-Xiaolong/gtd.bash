@@ -274,11 +274,33 @@ Shell-like environment, where you can run gtd commands without typing 'gtd'.
 	EOF
 }
 
-function process_shell_command() {
-	[ $# -eq 0 ] && return 0
-	case "$1" in
-		exit) return 1;;
-		*) echo "Incorrect command: $1";;
+function process_command() {
+	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
+
+	for arg in "$@"; do  #general flag: --help/debug/version/verbose
+		case $arg in
+			--debug) debug=true;;
+			--help|-h|-\?) showhelp=true;;
+			--verbose|-v) verbose=true;;
+			--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
+				return 0;;
+		esac
+	done
+
+	case "$1" in  #$1 is command
+		add|a) add_stuff "$GTD_INBOX";;
+		remove|rm|delete|del) remove_stuff $2;;
+		empty-trash) empty_trash;;
+		list|l) list_stuff $GTD_INBOX;;
+		list-trash) list_stuff $GTD_TRASH;;
+		view|v) view_stuff $2;;
+		edit|e) edit_stuff $2;;
+		install) install;;
+		uninstall) echo "Please just manually remove $INSTALL_DEST."
+			echo "You data is in $GTD_ROOT, take care of it.";;
+		shell) gtd_shell;;
+		help|-h|--help|-\?) usage;;
+		*) echo "Incorrect command: $1"; usage;;
 	esac
 	return 0
 }
@@ -293,31 +315,5 @@ function gtd_shell() {
 	done
 }
 
-#=== MAIN: PROCESS ARGUMENTS ==================================================
-[ $# -eq 0 ] && usage && return  #No arg, show usage
-
-for arg in "$@"; do  #general flag: --help/debug/version/verbose
-	case $arg in
-		--debug) debug=true;;
-		--help|-h|-\?) showhelp=true;;
-		--verbose|-v) verbose=true;;
-		--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
-			exit 0;;
-	esac
-done
-
-case "$1" in  #$1 is command
-	add|a) add_stuff "$GTD_INBOX";;
-	remove|rm|delete|del) remove_stuff $2;;
-	empty-trash) empty_trash;;
-	list|l) list_stuff $GTD_INBOX;;
-	list-trash) list_stuff $GTD_TRASH;;
-	view|v) view_stuff $2;;
-	edit|e) edit_stuff $2;;
-	install) install;;
-	uninstall) echo "Please just manually remove $INSTALL_DEST."
-		echo "You data is in $GTD_ROOT, take care of it.";;
-	shell) gtd_shell;;
-	help|-h|--help|-\?) usage;;
-	*) echo "Incorrect command: $1"; usage;;
-esac
+#=== MAIN =====================================================================
+process_command $@
