@@ -304,7 +304,8 @@ case "$1" in  #$1 is command
 	view|v) view_stuff $2;;
 	edit|e) edit_stuff $2;;
 	install) install;;
-	uninstall) echo "Please just manually remove $INSTALL_DEST.";;
+	uninstall) echo "Please just manually remove $INSTALL_DEST."
+		echo "You data is in $GTD_ROOT, take care of it.";;
 	shell) gtd_shell;;
 	help|-h|--help|-\?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
