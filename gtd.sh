@@ -162,6 +162,8 @@ function remove_stuff() { #$1 is id or alias
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
 }
 
+function empty_trash() { rm -rI $GTD_TRASH/*; }
+
 #=== EDIT =====================================================================
 function edit_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
@@ -301,6 +303,7 @@ done
 case "$1" in  #$1 is command
 	add|a) add_stuff "$GTD_INBOX";;
 	remove|rm|delete|del) remove_stuff $2;;
+	empty-trash) empty_trash;;
 	list|l) list_stuff $GTD_INBOX;;
 	list-trash) list_stuff $GTD_TRASH;;
 	view|v) view_stuff $2;;
