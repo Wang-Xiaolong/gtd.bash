@@ -196,7 +196,16 @@ function get_file() {  #$1 is id or alias
 	get_file_in_dir "$GTD_ROOT" "$1"
 }
 
+function usage_remove {  #heredoc
+	cat<<-EOF
+Usage: gtd <remove-command> [options...]
+  remove-command(with the same meaning): remove, delete, rm, del
+	EOF
+	exit 0
+}
+
 function remove_stuff() { #$1 is id or alias
+	[ $showhelp == true ] && usage_remove
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
