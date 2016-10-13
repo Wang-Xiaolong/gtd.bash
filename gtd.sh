@@ -263,6 +263,32 @@ function install() {
 	cp -i $0 $INSTALL_DEST
 }
 
+function process_shell_command() {
+	[ $# -eq 0 ] && return 0
+	case "$1" in
+		exit) return 1;;
+		*) echo "Incorrect command: $1";;
+	esac
+	return 0
+}
+
+function usage_shell() {  #heredoc
+	cat<<-EOF
+Shell-like environment, that you can run gtd commands without typing 'gtd'.
+	EOF
+	exit 0
+}
+
+function gtd_shell() {
+	[ $showhelp == true ] && usage_shell
+	while : ; do  # infinite loop
+		printf "gtd~ "
+		read args
+		process_shell_command $args
+		(( $? != 0 )) && break			
+	done
+}
+
 #Main: process args
 [ $# -eq 0 ] && usage  #No arg, show usage
 
@@ -285,6 +311,7 @@ case "$1" in  #$1 is command
 	edit|e) edit_stuff $2;;
 	install) install;;
 	uninstall) echo "Please just manually remove $INSTALL_DEST.";;
+	shell) gtd_shell;;
 	help|-h|--help|-\?) usage;;
 	*) echo "Incorrect command: $1"; usage;;
 esac
