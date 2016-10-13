@@ -310,7 +310,7 @@ function gtd_shell() {
 	while : ; do  # infinite loop
 		printf "gtd~ "
 		read args
-		process_shell_command $args
+		process_command $args
 		(( $? != 0 )) && break			
 	done
 }
