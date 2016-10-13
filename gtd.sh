@@ -18,6 +18,7 @@ The most commonly used gtd commands are:
 	EOF
 }
 
+#=== INIT =====================================================================
 debug=false
 function debug() {
 	[ $debug == true ] && >&2 echo "$@"
@@ -55,6 +56,7 @@ function check_and_make_dirs() {  #make gtd dirs
 	check_and_make_dir "$GTD_TRASH"
 }
 
+#=== ADD ======================================================================
 function usage_add() {  #heredoc
 	cat<<-EOF
 usage: gtd <add-command> [options...]
@@ -128,6 +130,14 @@ function add_stuff() {  #$1 is dir
 	echo "$new_id created."
 }
 
+#=== REMOVE ===================================================================
+function usage_remove {  #heredoc
+	cat<<-EOF
+Usage: gtd <remove-command> [options...]
+  remove-command(with the same meaning): remove, delete, rm, del
+	EOF
+}
+
 function get_file_in_dir() {  #$1 is path, $2 is id or alias
 	result=""
 	for file in "$1"/*; do
@@ -151,13 +161,6 @@ function get_file() {  #$1 is id or alias
 	get_file_in_dir "$GTD_ROOT" "$1"
 }
 
-function usage_remove {  #heredoc
-	cat<<-EOF
-Usage: gtd <remove-command> [options...]
-  remove-command(with the same meaning): remove, delete, rm, del
-	EOF
-}
-
 function remove_stuff() { #$1 is id or alias
 	[ $showhelp == true ] && usage_remove && return
 	path=$(get_file $1)
@@ -165,6 +168,7 @@ function remove_stuff() { #$1 is id or alias
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
 }
 
+#=== EDIT =====================================================================
 function edit_stuff() {  #$1 is id or alias
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
@@ -175,6 +179,7 @@ function edit_stuff() {  #$1 is id or alias
 	vim $path
 }
 
+#=== VIEW =====================================================================
 function print_file_info() {  #$1 is format, $2 is path
 	str=$1
 	fn=$(basename "$2")
@@ -203,6 +208,7 @@ function view_stuff() {  #$1 is id or alias
   	cat "$path" 
 }
 
+#=== LIST =====================================================================
 function usage_list {  #heredoc
 	cat<<-EOF
 Usage: gtd <list-command> [options...]
@@ -233,6 +239,7 @@ function list_stuff() {  #$1 is dir
 	done
 }
 
+#=== INSTALL ==================================================================
 function usage_install() {  #heredoc
 	cat<<-EOF
 Install gtd.sh to /usr/local/bin to make it a command.
@@ -258,6 +265,13 @@ function install() {
 	cp -i $0 $INSTALL_DEST
 }
 
+#=== SHELL ====================================================================
+function usage_shell() {  #heredoc
+	cat<<-EOF
+Shell-like environment, that you can run gtd commands without typing 'gtd'.
+	EOF
+}
+
 function process_shell_command() {
 	[ $# -eq 0 ] && return 0
 	case "$1" in
@@ -265,12 +279,6 @@ function process_shell_command() {
 		*) echo "Incorrect command: $1";;
 	esac
 	return 0
-}
-
-function usage_shell() {  #heredoc
-	cat<<-EOF
-Shell-like environment, that you can run gtd commands without typing 'gtd'.
-	EOF
 }
 
 function gtd_shell() {
@@ -283,7 +291,7 @@ function gtd_shell() {
 	done
 }
 
-#Main: process args
+#=== MAIN: PROCESS ARGUMENTS ==================================================
 [ $# -eq 0 ] && usage && return  #No arg, show usage
 
 for arg in "$@"; do  #general flag: --help/debug/version/verbose
