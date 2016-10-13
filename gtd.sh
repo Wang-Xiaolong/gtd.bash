@@ -16,7 +16,6 @@ The most commonly used gtd commands are:
   install
   uninstall		
 	EOF
-	exit 1
 }
 
 debug=false
@@ -68,7 +67,6 @@ usage: gtd <add-command> [options...]
     add-reference, ar
     add-someday,   as
 	EOF
-	exit 0
 }
 
 function get_id_from_fn() {  #light func just to get id, $1 is file base name
@@ -107,7 +105,7 @@ function get_max_id() {
 }
 
 function add_stuff() {  #$1 is dir
-	[ $showhelp == true ] && usage_add
+	[ $showhelp == true ] && usage_add && return
 	check_and_make_dirs
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
@@ -143,7 +141,6 @@ Usage: gtd <list-command> [options...]
     list-someday,   ls
     list-trash
 	EOF
-	exit 0
 }
 
 function print_file_info() {  #$1 is format, $2 is path
@@ -159,7 +156,7 @@ function print_file_info() {  #$1 is format, $2 is path
 }
 
 function list_stuff() {  #$1 is dir
-	[ $showhelp == true ] && usage_list
+	[ $showhelp == true ] && usage_list && return
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
 		path="$1/$fn"
@@ -201,11 +198,10 @@ function usage_remove {  #heredoc
 Usage: gtd <remove-command> [options...]
   remove-command(with the same meaning): remove, delete, rm, del
 	EOF
-	exit 0
 }
 
 function remove_stuff() { #$1 is id or alias
-	[ $showhelp == true ] && usage_remove
+	[ $showhelp == true ] && usage_remove && return
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
@@ -244,13 +240,12 @@ Only to be used with the script that's not installed.
 (I mean you can't install 'gtd' command with 'gtd' command).
 Usually need sudo or root permission.
 	EOF
-	exit 0
 }
 
 INSTALL_DEST=/usr/local/bin/gtd
 
 function install() {
-	[ $showhelp == true ] && usage_install
+	[ $showhelp == true ] && usage_install && return
 	debug "cmd=$0"
 	if [ "$0" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
@@ -276,11 +271,10 @@ function usage_shell() {  #heredoc
 	cat<<-EOF
 Shell-like environment, that you can run gtd commands without typing 'gtd'.
 	EOF
-	exit 0
 }
 
 function gtd_shell() {
-	[ $showhelp == true ] && usage_shell
+	[ $showhelp == true ] && usage_shell && return
 	while : ; do  # infinite loop
 		printf "gtd~ "
 		read args
@@ -290,7 +284,7 @@ function gtd_shell() {
 }
 
 #Main: process args
-[ $# -eq 0 ] && usage  #No arg, show usage
+[ $# -eq 0 ] && usage && return  #No arg, show usage
 
 for arg in "$@"; do  #general flag: --help/debug/version/verbose
 	case $arg in
