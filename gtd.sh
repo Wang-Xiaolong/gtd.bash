@@ -187,12 +187,21 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 }
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
-function remove_stuff() { #$1 is id or alias
+function move() {  #$1=target dir, $2=id|alias
+	path=$(get_file $2)
+	[ -z "$path" ] && echo "not_found" && return
+	dir=$(dirname $path)
+	[ $dir == $1 ] && echo already_in && return
+	mv "$path" "$1"
+}
+
+function remove_stuff() { #$1=id|alias
 	[ $to_help == true ] && usage_remove && return
-	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	path=$(get_file $1)
-	[ -z "$path" ] && echo "$1 not found." && return
-	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
+	case "$(move "$GTD_TRASH" $1)" in
+		not_found) echo "$1 not found.";;
+		already_in) echo "$1 is already in the Trash.";;
+		*) echo "$1 was removed to the Trash";;
+	esac
 }
 
 function empty_trash() { rm -rI $GTD_TRASH/*; }
