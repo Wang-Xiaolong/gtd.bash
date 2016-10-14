@@ -124,6 +124,7 @@ function add_stuff() {  #$1 is dir
 		fi
 	fi
 	echo "Any stuff, please (ctrl-d end, ctrl-c cancel):"
+	[ $in_shell == true ] && trap 'return' INT
 	input=$(cat)  #save keyin until eof
 	if [ -z `echo $input | tr -d '[:space:]'` ]; then  #empty check
 		echo "Nothing!"
@@ -274,6 +275,7 @@ Shell-like environment, where you can run gtd commands without typing 'gtd'.
 	EOF
 }
 
+in_shell=false
 function process_command() {
 	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
 
@@ -298,7 +300,10 @@ function process_command() {
 		install) install;;
 		uninstall) echo "Please just manually remove $INSTALL_DEST."
 			echo "You data is in $GTD_ROOT, take care of it.";;
-		shell) gtd_shell;;
+		shell) [ $in_shell == false ] && gtd_shell \
+		  || echo "We are already in gtd shell.";;
+		exit) [ $in_shell == true ] && in_shell=false \
+		  || echo "exit is a gtd shell command.";;
 		help|-h|--help|-\?) usage;;
 		*) echo "Incorrect command: $1"; usage;;
 	esac
@@ -307,11 +312,12 @@ function process_command() {
 
 function gtd_shell() {
 	[ $showhelp == true ] && usage_shell && return
+	in_shell=true
 	while : ; do  # infinite loop
 		printf "gtd~ "
 		read args
 		process_command $args
-		(( $? != 0 )) && break			
+		[ $in_shell == false ] && break
 	done
 }
 
