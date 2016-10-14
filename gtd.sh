@@ -27,7 +27,7 @@ function debug() {
 		>&2 echo "$@"
 	fi  #can't be 1-line fmt - cause the func return [ $debug == true ]
 }
-showhelp=false
+to_help=false
 verbose=false
 
 #=== INIT =====================================================================
@@ -80,7 +80,7 @@ function check_and_make_dirs() {  #make gtd dirs
 }
 
 function init() {
-	[ $showhelp = true ] && usage_init && return
+	[ $to_help = true ] && usage_init && return
 	check_and_make_dirs
 }
 
@@ -135,7 +135,7 @@ function get_max_id_in_dir() {
 function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function add_stuff() {  #$1 is dir
-	[ $showhelp == true ] && usage_add && return
+	[ $to_help == true ] && usage_add && return
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
@@ -188,7 +188,7 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
 function remove_stuff() { #$1 is id or alias
-	[ $showhelp == true ] && usage_remove && return
+	[ $to_help == true ] && usage_remove && return
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
@@ -256,7 +256,7 @@ Usage: gtd <list-command> [options...]
 }
 
 function list_stuff() {  #$1 is dir
-	[ $showhelp == true ] && usage_list && return
+	[ $to_help == true ] && usage_list && return
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
@@ -284,7 +284,7 @@ Usually need sudo or root permission.
 INSTALL_DEST=/usr/local/bin/gtd
 
 function install() {
-	[ $showhelp == true ] && usage_install && return
+	[ $to_help == true ] && usage_install && return
 	debug "cmd=$0"
 	if [ "$0" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
@@ -311,7 +311,7 @@ function process_command() {
 	for arg in "$@"; do  #general flag: --help/debug/version/verbose
 		case $arg in
 			--debug) debug=true;;
-			--help|-h|-\?) showhelp=true;;
+			--help|-h|-\?) to_help=true;;
 			--verbose|-v) verbose=true;;
 			--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
 				return 0;;
@@ -341,7 +341,7 @@ function process_command() {
 }
 
 function gtd_shell() {
-	[ $showhelp == true ] && usage_shell && return
+	[ $to_help == true ] && usage_shell && return
 	in_shell=true
 	while : ; do  # infinite loop
 		printf "gtd~ "
