@@ -21,20 +21,20 @@ The most commonly used gtd commands are:
 	EOF
 }
 
-#=== INIT =====================================================================
 debug=false
 function debug() {
-	[ $debug == true ] && >&2 echo "$@"
+	if [ $debug == true ]; then
+		>&2 echo "$@"
+	fi  #can't be 1-line fmt - cause the func return [ $debug == true ]
 }
-
 showhelp=false
 verbose=false
 
-function check_and_make_dir() {  #make dir if not exist
-	if [ ! -d "$1" ]; then
-		echo "No $1, create it."
-		mkdir "$1"
-	fi
+#=== INIT =====================================================================
+function usage_init() {  #heredoc
+	cat<<-EOF
+Create GTD library for current user($USER) in $GTD_ROOT.
+	EOF
 }
 
 GTD_ROOT="$HOME/.gtd"
@@ -47,6 +47,26 @@ GTD_REFERENCE="$GTD_ROOT/reference"
 GTD_SOMEDAY="$GTD_ROOT/someday"
 GTD_TRASH="$GTD_ROOT/trash"
 
+function check_dir { #check dir $1's existence
+	[ ! -d "$1" ] && debug "No $1" && echo false && return
+	echo true
+}
+function check_dirs() {
+	[ $(check_dir "$GTD_ROOT") == false ] && echo false && return
+	[ $(check_dir "$GTD_INBOX") == false ] && echo false && return
+	[ $(check_dir "$GTD_TODO") == false ] && echo false && return
+	[ $(check_dir "$GTD_WAIT") == false ] && echo false && return
+	[ $(check_dir "$GTD_PROJECT") == false ] && echo false && return
+	[ $(check_dir "$GTD_LOG") == false ] && echo false && return
+	[ $(check_dir "$GTD_REFERENCE") == false ] && echo false && return
+	[ $(check_dir "$GTD_SOMEDAY") == false ] && echo false && return
+	echo true
+}
+NO_DIR="No GTD library, please run 'gtd init' first."
+
+function check_and_make_dir() {  #make dir $1 if not exist
+	[ ! -d "$1" ] && echo "No $1, create it." && mkdir "$1"
+}
 function check_and_make_dirs() {  #make gtd dirs
 	check_and_make_dir "$GTD_ROOT"
 	check_and_make_dir "$GTD_INBOX"
@@ -57,6 +77,11 @@ function check_and_make_dirs() {  #make gtd dirs
 	check_and_make_dir "$GTD_REFERENCE"
 	check_and_make_dir "$GTD_SOMEDAY"
 	check_and_make_dir "$GTD_TRASH"
+}
+
+function init() {
+	[ $showhelp = true ] && usage_init && return
+	check_and_make_dirs
 }
 
 #=== ADD ======================================================================
@@ -111,7 +136,7 @@ function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function add_stuff() {  #$1 is dir
 	[ $showhelp == true ] && usage_add && return
-	check_and_make_dirs
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
 	if [ $verbose == true ]; then
@@ -164,6 +189,7 @@ function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
 function remove_stuff() { #$1 is id or alias
 	[ $showhelp == true ] && usage_remove && return
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
 	mv "$path" "$GTD_TRASH" && echo "$1 was removed to the Trash."
@@ -173,6 +199,7 @@ function empty_trash() { rm -rI $GTD_TRASH/*; }
 
 #=== EDIT =====================================================================
 function edit_stuff() {  #$1 is id or alias
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
 	if [ -z $(command -v vim) ]; then
@@ -196,6 +223,7 @@ function print_file_info() {  #$1 is format, $2 is path
 }
 
 function view_stuff() {  #$1 is id or alias
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	path=$(get_file $1)
 	[ -z "$path" ] && echo "$1 not found." && return
 	if [ $verbose == true ]; then
@@ -229,6 +257,7 @@ Usage: gtd <list-command> [options...]
 
 function list_stuff() {  #$1 is dir
 	[ $showhelp == true ] && usage_list && return
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
 		path="$1/$fn"
@@ -290,6 +319,7 @@ function process_command() {
 	done
 
 	case "$1" in  #$1 is command
+		init) init;;
 		add|a) add_stuff "$GTD_INBOX";;
 		remove|rm|delete|del) remove_stuff $2;;
 		empty-trash) empty_trash;;
