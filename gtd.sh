@@ -124,7 +124,7 @@ function add_stuff() {  #$1 is dir
 		fi
 	fi
 	echo "Any stuff, please (ctrl-d end, ctrl-c cancel):"
-	[ $in_shell == true ] && trap 'return' INT
+	[ $in_shell == true ] && trap "echo; return" INT
 	input=$(cat)  #save keyin until eof
 	if [ -z `echo $input | tr -d '[:space:]'` ]; then  #empty check
 		echo "Nothing!"
