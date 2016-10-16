@@ -190,8 +190,18 @@ function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 function move() {  #$1=path, $2=target dir
 	[ -z "$1" ] && echo "not_found" && return
 	dir=$(dirname $path)
-	[ $dir == $2 ] && echo already_in && return
+	[ $dir == $2 ] && echo already && return
 	mv "$1" "$2"
+}
+
+function move_stuff() { #$1=id|alias $2=target dir
+	path=$(get_file $1)
+	target_base=$(basename $2)
+	case "$(move "$path" "$2")" in
+	not_found) echo "$1 not found.";;
+	already) echo "$1 is already there.";;
+	*) echo "$1 was moved to $target_base";;
+	esac
 }
 
 function remove_stuff() { #$1=id|alias
@@ -199,7 +209,7 @@ function remove_stuff() { #$1=id|alias
 	path=$(get_file $1)
 	case "$(move "$path" "$GTD_TRASH")" in
 		not_found) echo "$1 not found.";;
-		already_in) echo "$1 is already in the Trash.";;
+		already) echo "$1 is already in the Trash.";;
 		*) echo "$1 was removed to the Trash";;
 	esac
 }
@@ -330,8 +340,15 @@ function process_command() {
 	case "$1" in  #$1 is command
 		init) init;;
 		add|a) add_stuff "$GTD_INBOX";;
-		remove|rm|delete|del) remove_stuff $2;;
+		remove|rm|delete|del|to-trash) remove_stuff $2;;
 		empty-trash) empty_trash;;
+		to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
+		to-todo|tt) move_stuff $2 "$GTD_TODO";;
+		to-wait|tw);;
+		to-project|tp);;
+		to-log|tl);;
+		to-reference|tr);;
+		to-someday|ts);;
 		list|l) list_stuff $GTD_INBOX;;
 		list-trash) list_stuff $GTD_TRASH;;
 		view|v) view_stuff $2;;
