@@ -137,8 +137,8 @@ function add_stuff() {  #$1=dir
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
 	shift  #skip $1 to other args
-	TEMP=`getopt -o m:vh --long message:,verbose,help -n 'gtd' -- "$@"`
-	[ $? != 0 ] && echo "Failed" && return
+	TEMP=`getopt -o m:vh --long message:,verbose,help -n 'gtd.add' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	verbose=false
@@ -223,8 +223,8 @@ function move_stuff() { #$1=target dir
 	target_base=$(basename $1)
 
 	shift  #skip $1 to other args
-	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
-	[ $? != 0 ] && echo "Failed" && return
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd.move' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	verbose=false
@@ -301,8 +301,8 @@ Usage: gtd edit [options...] <id or alias>
 
 function edit_stuff() {  #$1 is id or alias
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	TEMP=`getopt -o he: --long help,editor: -n 'gtd' -- "$@"`
-	[ $? != 0 ] && echo "Failed" && return
+	TEMP=`getopt -o he: --long help,editor: -n 'gtd.edit' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	item=""
@@ -347,8 +347,8 @@ function print_file_info() {  #$1 is format, $2 is path
 
 function view_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
-	[ $? != 0 ] && echo "Failed" && return
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd.view' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	verbose=false
@@ -397,8 +397,8 @@ function list_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	dir=$1
 	shift  #skip $1 to other args
-	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
-	[ $? != 0 ] && echo "Failed" && return
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd.list' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	verbose=false
