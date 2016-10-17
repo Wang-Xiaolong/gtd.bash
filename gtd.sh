@@ -258,7 +258,7 @@ function move_stuff() { #$1=target dir
 			someday) echo "$item is already a someday-maybe item."
 				;;
 			trash) echo "$item is already in the trash."
-				printf "Purge it? "
+				printf "Permanently remove it? "
 				read y_n
 				case "$y_n" in
 				y|Y|yes|Yes|YES) rm -f $path
