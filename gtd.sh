@@ -383,6 +383,12 @@ function process_command() {
 	case "$1" in  #$1 is command
 	init) init;;
 	add|a) shift; add_stuff "$GTD_INBOX" "$@";;
+	add-todo|at) shift; add_stuff "$GTD_TODO" "$@";;
+	add-wait|aw) shift; add_stuff "$GTD_WAIT" "$@";;
+	add-project|ap) shift; add_stuff "$GTD_PROJECT" "$@";;
+	add-log|al) shift; add_stuff "$GTD_LOG" "$@";;
+	add-reference|ar) shift; add_stuff "$GTD_REFERENCE" "$@";;
+	add-someday|as) shift; add_stuff "$GTD_SOMEDAY" "$@";;
 	remove|rm|delete|del|to-trash) remove_stuff $2;;
 	empty-trash) empty_trash;;
 	to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
