@@ -209,22 +209,44 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 }
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
-function move() {  #$1=target dir, $2=id|alias
+function move() {  #$1=target dir, $2=path
 	[ -z "$2" ] && echo "not_found" && return
-	dir=$(dirname $path)
+	dir=$(dirname $2)
 	[ $dir == $1 ] && echo already && return
 	mv "$2" "$1"
 }
 
-function move_stuff() { #$1=target dir $2=id|alias
+function move_stuff() { #$1=target dir
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
+	target=$1
+	target_base=$(basename $1)
+
+	shift  #skip $1 to other args
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
+	[ $? != 0 ] && echo "Failed" && return
+	eval set -- "$TEMP"
+	to_help=false
+	verbose=false
+	items=""
+	while : ; do
+		case "$1" in
+		-v|--verbose) verbose=true; shift;;
+		-h|--help) to_help=true; shift;;
+		--) shift; items="$1"; break;;  #no option args!
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
 	[ $to_help == true ] && usage_move && return
-	path=$(get_file $1)
-	target_base=$(basename $2)
-	case "$(move "$path" "$2")" in
-	not_found) echo "$1 not found.";;
-	already) echo "$1 is already there.";;
-	*) echo "$1 was moved to $target_base";;
-	esac
+	[ -z "$items" ] && echo "No item specified." && return
+	IFS="," read -r -a item_array <<< "$items"
+	for item in "${item_array[@]}"; do
+		path=$(get_file "$item")
+		case "$(move "$target" "$path")" in
+		not_found) echo "$item not found.";;
+		already) echo "$item is already there.";;
+		*) echo "$item was turned to $target_base";;
+		esac
+	done
 }
 
 #=== REMOVE ===================================================================
@@ -389,15 +411,15 @@ function process_command() {
 	add-log|al) shift; add_stuff "$GTD_LOG" "$@";;
 	add-reference|ar) shift; add_stuff "$GTD_REFERENCE" "$@";;
 	add-someday|as) shift; add_stuff "$GTD_SOMEDAY" "$@";;
-	remove|rm|delete|del|to-trash) remove_stuff $2;;
+	remove|rm|delete|del|to-trash) shift remove_stuff "$@";;
 	empty-trash) empty_trash;;
-	to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
-	to-todo|tt) move_stuff $2 "$GTD_TODO";;
-	to-wait|tw);;
-	to-project|tp);;
-	to-log|tl);;
-	to-reference|tr);;
-	to-someday|ts);;
+	to-inbox|ti) shift; move_stuff "$GTD_INBOX" "$@";;
+	to-todo|tt) shift; move_stuff "$GTD_TODO" "$@";;
+	to-wait|tw) shift; move_stuff "$GTD_WAIT" "$@";;
+	to-project|tp) shift; move_stuff "$GTD_PROJECT" "$@";;
+	to-log|tl) shift; move_stuff "$GTD_LOG" "$@";;
+	to-reference|tr) shift; move_stuff "$GTD_REFERENCE" "$@";;
+	to-someday|ts) shift; move_stuff "$GTD_SOMEDAY" "$@";;
 	list|l) shift; list_stuff "$GTD_INBOX" "$@";;
 	list-todo|lt) shift; list_stuff "$GTD_TODO" "$@";;
 	list-wait|lw) shift; list_stuff "$GTD_WAIT" "$@";;
