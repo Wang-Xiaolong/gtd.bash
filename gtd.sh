@@ -186,6 +186,7 @@ Usage: gtd <move-command> [options...] <id or alias>
     to-log,       tl
     to-reference, tr
     to-someday,   ts
+    to-trash
 	EOF
 }
 
@@ -236,14 +237,34 @@ function move_stuff() { #$1=target dir
 		*) echo "Unknown parameter $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_move && return
+	if [ $to_help == true ]; then
+		[ $target_base == trash ] && usage_remove || usage_move
+		return
+	fi
 	[ -z "$items" ] && echo "No item specified." && return
 	IFS="," read -r -a item_array <<< "$items"
 	for item in "${item_array[@]}"; do
 		path=$(get_file "$item")
 		case "$(move "$target" "$path")" in
 		not_found) echo "$item not found.";;
-		already) echo "$item is already there.";;
+		already)
+			case "$target_base" in
+			inbox) echo "$item is already in the inbox.";;
+			todo) echo "$item is already in the todo list.";;
+			wait) echo "$item is already in the waiting list.";;
+			project) echo "$item is already a project.";;
+			log) echo "$item is already a log.";;
+			reference) echo "$item is already a reference.";;
+			someday) echo "$item is already a someday-maybe item."
+				;;
+			trash) echo "$item is already in the trash."
+				printf "Purge it? "
+				read y_n
+				case "$y_n" in
+				y|Y|yes|Yes|YES) rm -f $path
+					echo "$item was permanently removed.";;
+				esac;;
+			esac;;
 		*) echo "$item was turned to $target_base";;
 		esac
 	done
@@ -253,21 +274,11 @@ function move_stuff() { #$1=target dir
 function usage_remove {  #heredoc
 	cat<<-EOF
 Usage: gtd <remove-command> [options...] <id or alias>
-  remove-command(with the same meaning): remove, delete, rm, del
+  remove-command(with the same meaning): remove, delete, rm, del, to-trash
 	EOF
 }
 
-function remove_stuff() { #$1=id|alias
-	[ $to_help == true ] && usage_remove && return
-	path=$(get_file $1)
-	case "$(move "$path" "$GTD_TRASH")" in
-	not_found) echo "$1 not found.";;
-	already) echo "$1 is already in the Trash.";;
-	*) echo "$1 was removed to the Trash";;
-	esac
-}
-
-function empty_trash() { rm -rI $GTD_TRASH/*; }
+function empty_trash() { rm -rI "$GTD_TRASH"/*; }
 
 #=== EDIT =====================================================================
 function edit_stuff() {  #$1 is id or alias
@@ -411,8 +422,6 @@ function process_command() {
 	add-log|al) shift; add_stuff "$GTD_LOG" "$@";;
 	add-reference|ar) shift; add_stuff "$GTD_REFERENCE" "$@";;
 	add-someday|as) shift; add_stuff "$GTD_SOMEDAY" "$@";;
-	remove|rm|delete|del|to-trash) shift remove_stuff "$@";;
-	empty-trash) empty_trash;;
 	to-inbox|ti) shift; move_stuff "$GTD_INBOX" "$@";;
 	to-todo|tt) shift; move_stuff "$GTD_TODO" "$@";;
 	to-wait|tw) shift; move_stuff "$GTD_WAIT" "$@";;
@@ -420,6 +429,8 @@ function process_command() {
 	to-log|tl) shift; move_stuff "$GTD_LOG" "$@";;
 	to-reference|tr) shift; move_stuff "$GTD_REFERENCE" "$@";;
 	to-someday|ts) shift; move_stuff "$GTD_SOMEDAY" "$@";;
+	remove|rm|delete|del|to-trash) shift; move_stuff "$GTD_TRASH" "$@";;
+	empty-trash) empty_trash;;
 	list|l) shift; list_stuff "$GTD_INBOX" "$@";;
 	list-todo|lt) shift; list_stuff "$GTD_TODO" "$@";;
 	list-wait|lw) shift; list_stuff "$GTD_WAIT" "$@";;
