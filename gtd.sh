@@ -290,15 +290,37 @@ Usage: gtd <remove-command> [options...] <id or alias>
 function empty_trash() { rm -rI "$GTD_TRASH"/*; }
 
 #=== EDIT =====================================================================
+function usage_edit {  #heredoc
+	cat<<-EOF
+Usage: gtd edit [options...] <id or alias>
+  options:
+    -h, --help
+    -e, --editor
+	EOF
+}
+
 function edit_stuff() {  #$1 is id or alias
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	path=$(get_file $1)
-	[ -z "$path" ] && echo "$1 not found." && return
-	if [ -z $(command -v vim) ]; then
-		echo "No vim, can't edit $1."
-		return
-	fi
-	vim $path
+	TEMP=`getopt -o he: --long help,editor: -n 'gtd' -- "$@"`
+	[ $? != 0 ] && echo "Failed" && return
+	eval set -- "$TEMP"
+	to_help=false
+	item=""
+	editor="vim"
+	while : ; do
+		case "$1" in
+		-e|--editor) editor=$2; shift 2;;
+		-h|--help) to_help=true; shift;;
+		--) shift; item="$1"; break;;  #no option args!
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_edit && return
+	[ -z $editor ] && echo "No editor specified." && return
+	[ -z $(command -v $editor) ] && echo "No $editor found." && return
+	path=$(get_file $item)
+	[ -z "$path" ] && echo "$item not found." && return
+	$editor $path
 }
 
 #=== VIEW =====================================================================
@@ -306,8 +328,8 @@ function usage_view {  #heredoc
 	cat<<-EOF
 Usage: gtd view [options...] <id or alias>
   options:
-	-h, --help
-	-v, --verbose
+    -h, --help
+    -v, --verbose
 	EOF
 }
 
@@ -473,7 +495,7 @@ function process_command() {
 	list-someday|ls) shift; list_stuff "$GTD_SOMEDAY" "$@";;
 	list-trash) shift; list_stuff $GTD_TRASH "$@";;
 	view|v) shift; view_stuff "$@";;
-	edit|e) edit_stuff $2;;
+	edit|e) shift; edit_stuff "$@";;
 	install) install;;
 	uninstall) echo "Please just manually remove $INSTALL_DEST."
 		echo "You data is in $GTD_ROOT, take care of it.";;
