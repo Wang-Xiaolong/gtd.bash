@@ -159,11 +159,17 @@ function add_stuff() {  #$1 is dir
 	echo "$new_id created."
 }
 
-#=== REMOVE ===================================================================
-function usage_remove {  #heredoc
+#=== MOVE =====================================================================
+function usage_move {  #heredoc
 	cat<<-EOF
-Usage: gtd <remove-command> [options...] <id or alias>
-  remove-command(with the same meaning): remove, delete, rm, del
+Usage: gtd <move-command> [options...] <id or alias>
+  move-command
+    to-todo,      tt
+    to-wait,      tw
+    to-project,   tp 
+    to-log,       tl
+    to-reference, tr
+    to-someday,   ts
 	EOF
 }
 
@@ -195,6 +201,7 @@ function move() {  #$1=path, $2=target dir
 }
 
 function move_stuff() { #$1=id|alias $2=target dir
+	[ $to_help == true ] && usage_move && return
 	path=$(get_file $1)
 	target_base=$(basename $2)
 	case "$(move "$path" "$2")" in
@@ -202,6 +209,14 @@ function move_stuff() { #$1=id|alias $2=target dir
 	already) echo "$1 is already there.";;
 	*) echo "$1 was moved to $target_base";;
 	esac
+}
+
+#=== REMOVE ===================================================================
+function usage_remove {  #heredoc
+	cat<<-EOF
+Usage: gtd <remove-command> [options...] <id or alias>
+  remove-command(with the same meaning): remove, delete, rm, del
+	EOF
 }
 
 function remove_stuff() { #$1=id|alias
