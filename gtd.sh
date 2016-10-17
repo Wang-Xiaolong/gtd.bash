@@ -145,7 +145,7 @@ function add_stuff() {  #$1=dir
 	message=""
 	while : ; do
 		case "$1" in
-		-m|--message) message="$2"; shift 2; return;;
+		-m|--message) message="$2"; shift 2;;
 		-v|--verbose) verbose=true; shift;;
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
@@ -153,7 +153,7 @@ function add_stuff() {  #$1=dir
 		esac
 	done
 	[ $to_help == true ] && usage_add && return
-	[ ! -z $message ] && echo "$message" > "$path" \
+	[ ! -z "$message" ] && echo "$message" > "$path" \
 	  && echo "$new_id created." && return
 	if [ $verbose == true ]; then
 		if [ -z $(command -v vim) ]; then
