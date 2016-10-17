@@ -190,7 +190,7 @@ Usage: gtd <move-command> [options...] <id or alias>
 	EOF
 }
 
-function get_file_in_dir() {  #$1 is path, $2 is id or alias
+function get_file_in_dir() {  #$1= path, $2=id|alias
 	result=""
 	for file in "$1"/*; do
 		if [ -d "${file}" ]; then
@@ -302,6 +302,15 @@ function edit_stuff() {  #$1 is id or alias
 }
 
 #=== VIEW =====================================================================
+function usage_view {  #heredoc
+	cat<<-EOF
+Usage: gtd view [options...] <id or alias>
+  options:
+	-h, --help
+	-v, --verbose
+	EOF
+}
+
 function print_file_info() {  #$1 is format, $2 is path
 	str=$1
 	fn=$(basename "$2")
@@ -314,10 +323,25 @@ function print_file_info() {  #$1 is format, $2 is path
 	echo "$str"
 }
 
-function view_stuff() {  #$1 is id or alias
+function view_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	path=$(get_file $1)
-	[ -z "$path" ] && echo "$1 not found." && return
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
+	[ $? != 0 ] && echo "Failed" && return
+	eval set -- "$TEMP"
+	to_help=false
+	verbose=false
+	item=""
+	while : ; do
+		case "$1" in
+		-v|--verbose) verbose=true; shift;;
+		-h|--help) to_help=true; shift;;
+		--) shift; item="$1"; break;;  #no option args!
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_view && return
+	path=$(get_file $item)
+	[ -z "$path" ] && echo "$item not found." && return
 	if [ $verbose == true ]; then
 		if [ -z $(command -v view) ]; then  #check cmd 'view' exist
 			echo "No 'view' command, just do simple view."
@@ -448,7 +472,7 @@ function process_command() {
 	list-reference|lr) shift; list_stuff "$GTD_REFERENCE" "$@";;
 	list-someday|ls) shift; list_stuff "$GTD_SOMEDAY" "$@";;
 	list-trash) shift; list_stuff $GTD_TRASH "$@";;
-	view|v) view_stuff $2;;
+	view|v) shift; view_stuff "$@";;
 	edit|e) edit_stuff $2;;
 	install) install;;
 	uninstall) echo "Please just manually remove $INSTALL_DEST."
