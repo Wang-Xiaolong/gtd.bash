@@ -255,8 +255,7 @@ function move_stuff() { #$1=target dir
 			project) echo "$item is already a project.";;
 			log) echo "$item is already a log.";;
 			reference) echo "$item is already a reference.";;
-			someday) echo "$item is already a someday-maybe item."
-				;;
+			someday) echo "$item is already for someday-maybe.";;
 			trash) echo "$item is already in the trash."
 				printf "Permanently remove it? "
 				read y_n
@@ -265,7 +264,17 @@ function move_stuff() { #$1=target dir
 					echo "$item was permanently removed.";;
 				esac;;
 			esac;;
-		*) echo "$item was turned to $target_base";;
+		*)
+			case "$target_base" in
+			inbox) echo "$item was moved into the inbox.";;
+			todo) echo "$item was moved into the todo list.";;
+			wait) echo "$item was moved into the waiting list.";;
+			project) echo "$item was turned to a project.";;
+			log) echo "$item was turned to a log.";;
+			reference) echo "$item was turned to a reference.";;
+			someday) echo "$item is for someday-maybe now.";;
+			trash) echo "$item was removed to trash."
+			esac;;
 		esac
 	done
 }
