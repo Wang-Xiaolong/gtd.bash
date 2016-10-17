@@ -239,9 +239,9 @@ function remove_stuff() { #$1=id|alias
 	[ $to_help == true ] && usage_remove && return
 	path=$(get_file $1)
 	case "$(move "$path" "$GTD_TRASH")" in
-		not_found) echo "$1 not found.";;
-		already) echo "$1 is already in the Trash.";;
-		*) echo "$1 was removed to the Trash";;
+	not_found) echo "$1 not found.";;
+	already) echo "$1 is already in the Trash.";;
+	*) echo "$1 was removed to the Trash";;
 	esac
 }
 
@@ -374,43 +374,43 @@ function process_command() {
 
 	for arg in "$@"; do  #general flag: debug/version
 		case $arg in
-			--debug) debug=true;;
-			--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
-				return 0;;
+		--debug) debug=true;;
+		--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
+			return 0;;
 		esac
 	done
 
 	case "$1" in  #$1 is command
-		init) init;;
-		add|a) shift; add_stuff "$GTD_INBOX" "$@";;
-		remove|rm|delete|del|to-trash) remove_stuff $2;;
-		empty-trash) empty_trash;;
-		to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
-		to-todo|tt) move_stuff $2 "$GTD_TODO";;
-		to-wait|tw);;
-		to-project|tp);;
-		to-log|tl);;
-		to-reference|tr);;
-		to-someday|ts);;
-		list|l) shift; list_stuff "$GTD_INBOX" "$@";;
-		list-todo|lt) shift; list_stuff "$GTD_TODO" "$@";;
-		list-wait|lw) shift; list_stuff "$GTD_WAIT" "$@";;
-		list-project|lp) shift; list_stuff "$GTD_PROJECT" "$@";;
-		list-log|ll) shift; list_stuff "$GTD_LOG" "$@";;
-		list-reference|lr) shift; list_stuff "$GTD_REFERENCE" "$@";;
-		list-someday|ls) shift; list_stuff "$GTD_SOMEDAY" "$@";;
-		list-trash) shift; list_stuff $GTD_TRASH "$@";;
-		view|v) view_stuff $2;;
-		edit|e) edit_stuff $2;;
-		install) install;;
-		uninstall) echo "Please just manually remove $INSTALL_DEST."
-			echo "You data is in $GTD_ROOT, take care of it.";;
-		shell) [ $in_shell == false ] && gtd_shell \
-		  || echo "We are already in gtd shell.";;
-		exit) [ $in_shell == true ] && in_shell=false \
-		  || echo "exit is a gtd shell command.";;
-		help|-h|--help|-\?) usage;;
-		*) echo "Incorrect command: $1"; usage;;
+	init) init;;
+	add|a) shift; add_stuff "$GTD_INBOX" "$@";;
+	remove|rm|delete|del|to-trash) remove_stuff $2;;
+	empty-trash) empty_trash;;
+	to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
+	to-todo|tt) move_stuff $2 "$GTD_TODO";;
+	to-wait|tw);;
+	to-project|tp);;
+	to-log|tl);;
+	to-reference|tr);;
+	to-someday|ts);;
+	list|l) shift; list_stuff "$GTD_INBOX" "$@";;
+	list-todo|lt) shift; list_stuff "$GTD_TODO" "$@";;
+	list-wait|lw) shift; list_stuff "$GTD_WAIT" "$@";;
+	list-project|lp) shift; list_stuff "$GTD_PROJECT" "$@";;
+	list-log|ll) shift; list_stuff "$GTD_LOG" "$@";;
+	list-reference|lr) shift; list_stuff "$GTD_REFERENCE" "$@";;
+	list-someday|ls) shift; list_stuff "$GTD_SOMEDAY" "$@";;
+	list-trash) shift; list_stuff $GTD_TRASH "$@";;
+	view|v) view_stuff $2;;
+	edit|e) edit_stuff $2;;
+	install) install;;
+	uninstall) echo "Please just manually remove $INSTALL_DEST."
+		echo "You data is in $GTD_ROOT, take care of it.";;
+	shell) [ $in_shell == false ] && gtd_shell \
+	  || echo "We are already in gtd shell.";;
+	exit) [ $in_shell == true ] && in_shell=false \
+	  || echo "exit is a gtd shell command.";;
+	help|-h|--help|-\?) usage;;
+	*) echo "Incorrect command: $1"; usage;;
 	esac
 	return 0
 }
