@@ -100,7 +100,7 @@ usage: gtd <add-command> [options...]
 	EOF
 }
 
-function get_id_from_fn() {  #light func just to get id, $1 is file base name
+function get_id_from_fn() {  #light func just to get id, $1=file.basename
 	id_str=$(echo "$1" | sed -e "s/\..*//g")  #remove chars after dots
 	re='^[0-9]+$'  #check if id is num w/ regular expression
 	if ! [[ $id_str =~ $re ]]; then
@@ -110,7 +110,7 @@ function get_id_from_fn() {  #light func just to get id, $1 is file base name
 	fi
 }
 
-function get_max_id_in_dir() {
+function get_max_id_in_dir() {  #$1=dir
 	declare -i max_id=1000  #id start from 1001
 	declare -i max_id_dir
 	for file in "$1"/*; do
@@ -305,11 +305,26 @@ Usage: gtd <list-command> [options...]
 	EOF
 }
 
-function list_stuff() {  #$1 is dir
+function list_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	check_and_make_dirs
-	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
-		path="$1/$fn"
+	dir=$1
+	shift  #skip $1 to other args
+	TEMP=`getopt -o vh --long verbose,help -n 'gtd' -- "$@"`
+	[ $? != 0 ] && echo "Failed" && return
+	eval set -- "$TEMP"
+	to_help=false
+	verbose=false
+	while : ; do
+		case "$1" in
+		-v|--verbose) verbose=true; shift;;
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_list && return
+	for fn in $(ls "$dir/" | sort -n -t '.' -k 1); do
+		path="$dir/$fn"
 		if [ $verbose == true ]; then  #id, create/update time
 			print_file_info "[%i] created@%ct  updated@%ut" "$path"
 			echo "$(cat "$path")"  # and content
@@ -377,8 +392,14 @@ function process_command() {
 		to-log|tl);;
 		to-reference|tr);;
 		to-someday|ts);;
-		list|l) list_stuff $GTD_INBOX;;
-		list-trash) list_stuff $GTD_TRASH;;
+		list|l) shift; list_stuff "$GTD_INBOX" "$@";;
+		list-todo|lt) shift; list_stuff "$GTD_TODO" "$@";;
+		list-wait|lw) shift; list_stuff "$GTD_WAIT" "$@";;
+		list-project|lp) shift; list_stuff "$GTD_PROJECT" "$@";;
+		list-log|ll) shift; list_stuff "$GTD_LOG" "$@";;
+		list-reference|lr) shift; list_stuff "$GTD_REFERENCE" "$@";;
+		list-someday|ls) shift; list_stuff "$GTD_SOMEDAY" "$@";;
+		list-trash) shift; list_stuff $GTD_TRASH "$@";;
 		view|v) view_stuff $2;;
 		edit|e) edit_stuff $2;;
 		install) install;;
