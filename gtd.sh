@@ -27,8 +27,6 @@ function debug() {
 		>&2 echo "$@"
 	fi  #can't be 1-line fmt - cause the func return [ $debug == true ]
 }
-to_help=false
-verbose=false
 
 #=== INIT =====================================================================
 function usage_init() {  #heredoc
@@ -134,11 +132,29 @@ function get_max_id_in_dir() {
 }
 function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
-function add_stuff() {  #$1 is dir
-	[ $to_help == true ] && usage_add && return
+function add_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	new_id=$(($(get_max_id) + 1))
 	path="$1/$new_id.$(date +%s)"
+	shift  #skip $1 to other args
+	TEMP=`getopt -o m:vh --long message:,verbose,help -n 'gtd' -- "$@"`
+	[ $? != 0 ] && echo "Failed" && return
+	eval set -- "$TEMP"
+	to_help=false
+	verbose=false
+	message=""
+	while : ; do
+		case "$1" in
+		-m|--message) message="$2"; shift 2; return;;
+		-v|--verbose) verbose=true; shift;;
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_add && return
+	[ ! -z $message ] && echo "$message" > "$path" \
+	  && echo "$new_id created." && return
 	if [ $verbose == true ]; then
 		if [ -z $(command -v vim) ]; then
 			echo "No vim, just simply."
@@ -166,7 +182,7 @@ Usage: gtd <move-command> [options...] <id or alias>
   move-command
     to-todo,      tt
     to-wait,      tw
-    to-project,   tp 
+    to-project,   tp
     to-log,       tl
     to-reference, tr
     to-someday,   ts
@@ -193,14 +209,14 @@ function get_file_in_dir() {  #$1 is path, $2 is id or alias
 }
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
-function move() {  #$1=path, $2=target dir
-	[ -z "$1" ] && echo "not_found" && return
+function move() {  #$1=target dir, $2=id|alias
+	[ -z "$2" ] && echo "not_found" && return
 	dir=$(dirname $path)
-	[ $dir == $2 ] && echo already && return
-	mv "$1" "$2"
+	[ $dir == $1 ] && echo already && return
+	mv "$2" "$1"
 }
 
-function move_stuff() { #$1=id|alias $2=target dir
+function move_stuff() { #$1=target dir $2=id|alias
 	[ $to_help == true ] && usage_move && return
 	path=$(get_file $1)
 	target_base=$(basename $2)
@@ -290,7 +306,6 @@ Usage: gtd <list-command> [options...]
 }
 
 function list_stuff() {  #$1 is dir
-	[ $to_help == true ] && usage_list && return
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	check_and_make_dirs
 	for fn in $(ls "$1/" | sort -n -t '.' -k 1); do
@@ -342,11 +357,9 @@ in_shell=false
 function process_command() {
 	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
 
-	for arg in "$@"; do  #general flag: --help/debug/version/verbose
+	for arg in "$@"; do  #general flag: debug/version
 		case $arg in
 			--debug) debug=true;;
-			--help|-h|-\?) to_help=true;;
-			--verbose|-v) verbose=true;;
 			--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
 				return 0;;
 		esac
@@ -354,7 +367,7 @@ function process_command() {
 
 	case "$1" in  #$1 is command
 		init) init;;
-		add|a) add_stuff "$GTD_INBOX";;
+		add|a) shift; add_stuff "$GTD_INBOX" "$@";;
 		remove|rm|delete|del|to-trash) remove_stuff $2;;
 		empty-trash) empty_trash;;
 		to-inbox|ti) move_stuff $2 "$GTD_INBOX";;
@@ -382,15 +395,16 @@ function process_command() {
 }
 
 function gtd_shell() {
-	[ $to_help == true ] && usage_shell && return
 	in_shell=true
 	while : ; do  # infinite loop
 		printf "gtd~ "
 		read args
-		process_command $args
+		eval set -- "$args"
+		process_command "$@"
 		[ $in_shell == false ] && break
 	done
 }
 
 #=== MAIN =====================================================================
-process_command $@
+[ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
+process_command "$@"  #only "$@" can trans things properly, $@/$*/"$*" can't.
