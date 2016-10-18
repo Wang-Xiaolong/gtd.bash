@@ -429,16 +429,26 @@ function usage_install() {  #heredoc
 Install gtd.sh to /usr/local/bin to make it a command.
 Only to be used with the script that's not installed.
 (I mean you can't install 'gtd' command with 'gtd' command).
-Usually need sudo or root permission.
 	EOF
 }
 
 INSTALL_DEST=/usr/local/bin/gtd
 
 function install() {
+	script_path="$0"
+	TEMP=`getopt -o h --long help -n 'gtd.install' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
 	[ $to_help == true ] && usage_install && return
-	debug "cmd=$0"
-	if [ "$0" == "$INSTALL_DEST" ]; then
+	if [ "$script_path" == "$INSTALL_DEST" ]; then
 		echo "You are already using the installed command."
 		return
 	fi
@@ -446,7 +456,7 @@ function install() {
 		echo "I just can't locate the script at $0"
 		exit 1
 	fi
-	cp -i $0 $INSTALL_DEST
+	sudo cp -i $0 $INSTALL_DEST
 }
 
 #=== SHELL ====================================================================
