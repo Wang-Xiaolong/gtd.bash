@@ -502,7 +502,7 @@ function process_command() {
 	done
 
 	case "$1" in  #$1 is command
-	init) shift init "$@";;
+	init) shift; init "$@";;
 	add|a) shift; add_stuff "$GTD_INBOX" "$@";;
 	add-todo|at) shift; add_stuff "$GTD_TODO" "$@";;
 	add-wait|aw) shift; add_stuff "$GTD_WAIT" "$@";;
