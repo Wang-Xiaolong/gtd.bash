@@ -78,6 +78,17 @@ function check_and_make_dirs() {  #make gtd dirs
 }
 
 function init() {
+	TEMP=`getopt -o h --long help -n 'gtd.init' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
 	[ $to_help = true ] && usage_init && return
 	check_and_make_dirs
 }
@@ -479,7 +490,7 @@ function process_command() {
 	done
 
 	case "$1" in  #$1 is command
-	init) init;;
+	init) shift init "$@";;
 	add|a) shift; add_stuff "$GTD_INBOX" "$@";;
 	add-todo|at) shift; add_stuff "$GTD_TODO" "$@";;
 	add-wait|aw) shift; add_stuff "$GTD_WAIT" "$@";;
