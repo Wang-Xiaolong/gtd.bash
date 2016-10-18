@@ -506,10 +506,10 @@ function process_command() {
 	list-trash) shift; list_stuff $GTD_TRASH "$@";;
 	view|v) shift; view_stuff "$@";;
 	edit|e) shift; edit_stuff "$@";;
-	install) install;;
+	install) shift; install "$@";;
 	uninstall) echo "Please just manually remove $INSTALL_DEST."
 		echo "You data is in $GTD_ROOT, take care of it.";;
-	shell) [ $in_shell == false ] && gtd_shell \
+	shell) [ $in_shell == false ] && gtd_shell "$@"\
 	  || echo "We are already in gtd shell.";;
 	exit) [ $in_shell == true ] && in_shell=false \
 	  || echo "exit is a gtd shell command.";;
@@ -520,6 +520,20 @@ function process_command() {
 }
 
 function gtd_shell() {
+	shift  #bypass 'shell'
+	TEMP=`getopt -o h --long help -n 'gtd.shell' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown parameter $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_shell && return
+
 	in_shell=true
 	while : ; do  # infinite loop
 		printf "gtd~ "
