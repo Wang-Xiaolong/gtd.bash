@@ -437,37 +437,49 @@ function list_stuff() {  #$1=dir
 #=== INSTALL ==================================================================
 function usage_install() {  #heredoc
 	cat<<-EOF
-Install gtd.sh to /usr/local/bin to make it a command.
-Only to be used with the script that's not installed.
-(I mean you can't install 'gtd' command with 'gtd' command).
+usage: gtd install [options...]
+  options
+    no options                Install gtd.sh to /usr/local/bin/gtd
+                                to make it a command.
+                                (Need sudo permission probably)
+    -h,       --help          Show this document.
+    -p <dir>, --option=<dir>  Install portable gtd.sh to the specified directory.
 	EOF
 }
 
-INSTALL_DEST=/usr/local/bin/gtd
-
 function install() {
 	script_path="$0"
-	TEMP=`getopt -o h --long help -n 'gtd.install' -- "$@"`
+	destin_path=/usr/local/bin/gtd
+	portable=false
+	TEMP=`getopt -o hp: --long help,portable: -n 'gtd.install' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	to_help=false
 	while : ; do
 		case "$1" in
 		-h|--help) to_help=true; shift;;
+		-p|--portable)
+			[ ! -d "$2" ] && echo "Dir $2 not found." && return
+			destin_path="$2"/gtd.sh
+			portable=true
+			shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_install && return
-	if [ "$script_path" == "$INSTALL_DEST" ]; then
+	if [ "$script_path" == "$destin_path" ]; then
 		echo "You are already using the installed command."
 		return
 	fi
-	if [ ! -f "$0" ]; then
+	if [ ! -f "$script_path" ]; then
 		echo "I just can't locate the script at $0"
 		exit 1
 	fi
-	sudo cp -i $0 $INSTALL_DEST
+	cp -i $script_path $destin_path
+	[ $portable == true ] && \
+	  sed -i -e 's/^GTD_ROOT=.*$/GTD_ROOT="."/g' "$destin_path"
+	  #replace GTD_ROOT="..." to GTD_ROOT=".", then it's portable.
 }
 
 #=== SHELL ====================================================================
