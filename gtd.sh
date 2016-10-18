@@ -86,7 +86,7 @@ function init() {
 		case "$1" in
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help = true ] && usage_init && return
@@ -160,7 +160,7 @@ function add_stuff() {  #$1=dir
 		-v|--verbose) verbose=true; shift;;
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_add && return
@@ -245,7 +245,7 @@ function move_stuff() { #$1=target dir
 		-v|--verbose) verbose=true; shift;;
 		-h|--help) to_help=true; shift;;
 		--) shift; items="$1"; break;;  #no option args!
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	if [ $to_help == true ]; then
@@ -323,7 +323,7 @@ function edit_stuff() {  #$1 is id or alias
 		-e|--editor) editor=$2; shift 2;;
 		-h|--help) to_help=true; shift;;
 		--) shift; item="$1"; break;;  #no option args!
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_edit && return
@@ -369,7 +369,7 @@ function view_stuff() {
 		-v|--verbose) verbose=true; shift;;
 		-h|--help) to_help=true; shift;;
 		--) shift; item="$1"; break;;  #no option args!
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_view && return
@@ -418,7 +418,7 @@ function list_stuff() {  #$1=dir
 		-v|--verbose) verbose=true; shift;;
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_list && return
@@ -455,7 +455,7 @@ function install() {
 		case "$1" in
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_install && return
@@ -540,7 +540,7 @@ function gtd_shell() {
 		case "$1" in
 		-h|--help) to_help=true; shift;;
 		--) shift; break;;
-		*) echo "Unknown parameter $1"; return;;
+		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_shell && return
