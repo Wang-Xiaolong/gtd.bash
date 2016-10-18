@@ -189,7 +189,7 @@ function add_stuff() {  #$1=dir
 #=== MOVE =====================================================================
 function usage_move {  #heredoc
 	cat<<-EOF
-Usage: gtd <move-command> [options...] <id or alias>
+usage: gtd <move-command> [options...] <id or alias>
   move-command
     to-todo,      tt
     to-wait,      tw
@@ -293,7 +293,7 @@ function move_stuff() { #$1=target dir
 #=== REMOVE ===================================================================
 function usage_remove {  #heredoc
 	cat<<-EOF
-Usage: gtd <remove-command> [options...] <id or alias>
+usage: gtd <remove-command> [options...] <id or alias>
   remove-command(with the same meaning): remove, delete, rm, del, to-trash
 	EOF
 }
@@ -303,7 +303,7 @@ function empty_trash() { rm -rI "$GTD_TRASH"/*; }
 #=== EDIT =====================================================================
 function usage_edit {  #heredoc
 	cat<<-EOF
-Usage: gtd edit [options...] <id or alias>
+usage: gtd edit [options...] <id or alias>
   options:
     -h, --help
     -e, --editor
@@ -337,7 +337,7 @@ function edit_stuff() {  #$1 is id or alias
 #=== VIEW =====================================================================
 function usage_view {  #heredoc
 	cat<<-EOF
-Usage: gtd view [options...] <id or alias>
+usage: gtd view [options...] <id or alias>
   options:
     -h, --help
     -v, --verbose
@@ -391,7 +391,7 @@ function view_stuff() {
 #=== LIST =====================================================================
 function usage_list {  #heredoc
 	cat<<-EOF
-Usage: gtd <list-command> [options...]
+usage: gtd <list-command> [options...]
   list-command
     list,           l
     list-todo,      lt
