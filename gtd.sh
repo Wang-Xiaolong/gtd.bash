@@ -310,7 +310,7 @@ usage: gtd edit [options...] <id or alias>
 	EOF
 }
 
-function edit_stuff() {  #$1 is id or alias
+function edit_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	TEMP=`getopt -o he: --long help,editor: -n 'gtd.edit' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
@@ -386,6 +386,67 @@ function view_stuff() {
 	print_file_info "[%i] created@%ct  updated@%ut" "$path"
 	printf '%0.s-' $(seq 1 $(tput cols))  #print a separate line
   	cat "$path" 
+}
+
+#=== SET/UNSET ================================================================
+function usage_set {  #heredoc
+	cat<<-EOF
+usage: gtd set [options] <items>
+       gtd unset [options] <items>
+  options:
+    -a, --alias
+    -c, --context
+    -d, --date
+    -o, --owner
+    -p, --priority
+    -s, --sensitivity
+    -t, --tag
+	EOF
+}
+
+function set_stuff() {
+	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
+	TEMP=`getopt -o ha:c:d:o:p:s:t \
+	  --long help,alias:context:date:owner:priority:sensitivity:tag: \
+	  -n 'gtd.set' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	alias=""
+	context=""
+	date=""
+	owner=""
+	priority=""
+	sensitivity=""
+	tag=""
+	item=""
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-a|--alias) alias=$2; shift 2;;
+		-c|--context) context=$2; shift 2;;
+		-d|--date) date=$2; shift 2;;
+		-o|--owner) owner=$2; shift 2;;
+		-p|--priority) priority=$2; shift 2;;
+		-s|--sensitivity) sensitivity=$2; shift 2;;
+		-t|--tag) tag=$2; shift 2;;
+		--) shift; item="$1"; break;;  #no option args!
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_set && return
+	path=$(get_file $item)
+	[ -z "$path" ] && echo "$item not found." && return
+	dir=$(dirname "$path")
+	fn=$(basename "$path")
+	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
+	new_fn=${PARTS[0]}  #id
+	if [ ! -z $date ]; then
+		new_fn="$new_fn.$(date -d"$date" +%s)"
+	else
+		new_fn="$new_fn.${PARTS[1]}"
+	fi
+	[ $new_fn != $fn ] && mv "$path" "$dir/$new_fn"
 }
 
 #=== LIST =====================================================================
@@ -529,6 +590,7 @@ function process_command() {
 	list-trash) shift; list_stuff $GTD_TRASH "$@";;
 	view|v) shift; view_stuff "$@";;
 	edit|e) shift; edit_stuff "$@";;
+	set|s) shift; set_stuff "$@";;
 	install) shift; install "$@";;
 	uninstall) echo "Please just manually remove $INSTALL_DEST."
 		echo "You data is in $GTD_ROOT, take care of it.";;
