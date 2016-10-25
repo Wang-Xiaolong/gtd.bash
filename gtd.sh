@@ -114,7 +114,7 @@ function make_fn() {  #$1=id $2=ctime $3=alias $4=context $5=due $6=owner
 	[ "$7" != "-p" ] && str="$str.$7"
 	[ "$8" != "-s" ] && str="$str.$8"
 	[ "$9" != "-t" ] && str="$str.$9"
-	[ "${10}" != "-e" ] && str="$str.${10}"
+	[ "${10}" != "-e" ] && str="$str.${10}" || str="$str.-e.txt"
 	echo "$str"
 }
 
