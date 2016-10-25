@@ -103,6 +103,10 @@ function get_id_from_fn() {  #light func just to get id, $1=file.basename
 		echo "$id_str"
 	fi
 }
+function get_id_from_path() {  #$1=path
+	fn="$(basename "$1")"
+	echo "$(get_id_from_fn "$fn")"
+}
 
 function get_max_id_in_dir() {  #$1=dir
 	declare -i max_id=1000  #id start from 1001
@@ -486,7 +490,12 @@ function set_stuff() {
 	while : ; do
 		case "$1" in
 		-h|--help) to_help=true; shift;;
-		-a|--alias) alias=$2; shift 2;;
+		-a|--alias) alias=$2; shift 2
+			alias_dup=$(get_file $alias)
+			if [ ! -z $alias_dup ]; then
+				alias_id="$(get_id_from_path $alias_dup)"
+				echo "Alias $alias is being used by $alias_id."
+			fi;;
 		-c|--ctime) ctime=$2; shift 2;;
 		-x|--context) context=$2; shift 2;;
 		-d|--due) due=$2; shift 2;;
