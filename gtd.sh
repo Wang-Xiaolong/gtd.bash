@@ -191,8 +191,8 @@ function get_file_in_dir() {  #$1= path, $2=id|alias
 		else
 			fn=$(basename "${file}")
 			[ "$fn" == "*" ] && continue
-			id_str=$(get_id_from_fn "$fn")
-			if [ "$id_str" == "$2" ]; then
+			if [[ "$fn" == $2.* ]] || [[ "$fn" =~ ".-a.$2." ]]
+			then
 				result=$file
 				break
 			fi
