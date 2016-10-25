@@ -196,7 +196,7 @@ function get_file_in_dir() {  #$1= path, $2=id|alias
 			fn=$(basename "${file}")
 			[ "$fn" == "*" ] && continue
 			if [[ "$fn" == $2.* ]] || [[ "$fn" =~ ".-a.$2." ]]
-			then
+			then  #^good regex use!
 				result=$file
 				break
 			fi
@@ -206,7 +206,7 @@ function get_file_in_dir() {  #$1= path, $2=id|alias
 }
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
-function print_file_info() {  #$1 is format, $2 is path
+function print_file_info() {  #$1=format, $2=path
 	str=$1
 	fn=$(basename "$2")
 	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
