@@ -207,14 +207,16 @@ function get_file_in_dir() {  #$1= path, $2=id|alias
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
 function print_file_info() {  #$1=format, $2=path
+#format: %i-id %c-create_time %u-update_time
+#  %a-alias %x-context %d-due %o-owner %p-priority %s-sensitivity %t-tag %e-ext
 	str=$1
 	fn=$(basename "$2")
-	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
-	str=$(echo "$str" | sed -r "s/%i/${PARTS[0]}/g")
-	create_time=$(date --date="@${PARTS[1]}" "+%F %H:%M")
-	str=$(echo "$str" | sed -r "s/%ct/$create_time/g")
+	declare -a fn_arr=($(parse_fn "$fn"))
+	str=$(echo "$str" | sed -r "s/%i/${fn_arr[0]}/g")
+	create_time=$(date --date="@${fn_arr[1]}" "+%F %H:%M")
+	str=$(echo "$str" | sed -r "s/%c/$create_time/g")
 	update_time="$(date "+%F %H:%M" -r "$2")"
-	str=$(echo "$str" | sed -r "s/%ut/$update_time/g")
+	str=$(echo "$str" | sed -r "s/%u/$update_time/g")
 	echo "$str"
 }
 
@@ -445,7 +447,7 @@ function view_stuff() {
 			return
 		fi
 	fi 
-	print_file_info "[%i] created@%ct  updated@%ut" "$path"
+	print_file_info "[%i] created@%c  updated@%u" "$path"
 	printf '%0.s-' $(seq 1 $(tput cols))  #print a separate line
   	cat "$path" 
 }
@@ -565,7 +567,7 @@ function list_stuff() {  #$1=dir
 	for fn in $(ls "$dir/" | sort -n -t '.' -k 1); do
 		path="$dir/$fn"
 		if [ $verbose == true ]; then  #id, create/update time
-			print_file_info "[%i] created@%ct  updated@%ut" "$path"
+			print_file_info "[%i] created@%c  updated@%u" "$path"
 			echo "$(cat "$path")"  # and content
 		else  #brief: just id and the 1st line
 			echo -e "[$(get_id_from_fn "$fn")]\t" \
