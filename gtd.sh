@@ -223,7 +223,8 @@ usage: gtd <add-command> [options...]
 function add_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
 	new_id=$(($(get_max_id) + 1))
-	path="$1/$new_id.$(date +%s)"
+	fn=$(make_fn $new_id $(date +%s) -a -x -d -o -p -s -t -e)
+	path="$1/$fn"
 	shift  #skip $1 to other args
 	TEMP=`getopt -o m:vh --long message:,verbose,help -n 'gtd.add' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
