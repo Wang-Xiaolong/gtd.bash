@@ -484,8 +484,8 @@ usage: gtd set [options] <items>
 
 function set_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	TEMP=`getopt -o hc:a:x:d:o:p:s:t:e: --long \
-	  help,ctime:alias:context:date:owner:priority:sensitivity:tag:ext: \
+	TEMP=`getopt -o hc:a:x:d:o:p:s:t:e: --long help,ctime:,alias:\
+	  --long context:,date:,owner:,priority:,sensitivity:,tag:,ext: \
 	  -n 'gtd.set' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
