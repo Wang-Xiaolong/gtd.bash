@@ -108,28 +108,6 @@ function get_id_from_path() {  #$1=path
 	echo "$(get_id_from_fn "$fn")"
 }
 
-function get_max_id_in_dir() {  #$1=dir
-	declare -i max_id=1000  #id start from 1001
-	declare -i max_id_dir
-	for file in "$1"/*; do
-		if [ -d "${file}" ]; then
-			max_id_dir=$(get_max_id_in_dir "${file}")
-			if [[ $max_id_dir > $max_id ]]; then
-				max_id=$max_id_dir
-			fi
-		else
-			fn=$(basename "${file}")
-			[ "$fn" == "*" ] && continue
-			id_str=$(get_id_from_fn "$fn")
-			if [ $(($id_str+0)) -gt $max_id ]; then
-				max_id=$(($id_str+0))
-			fi
-		fi
-	done
-	echo $max_id  #return value!
-}
-function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
-
 function parse_fn() {  #$1=fn
 	IFS='.' read -ra PARTS <<< "$1"
 	cur="id"
@@ -249,6 +227,28 @@ usage: gtd <add-command> [options...]
     --verbose,     -v  Open vim to facilitate complex editing
 	EOF
 }
+
+function get_max_id_in_dir() {  #$1=dir
+	declare -i max_id=1000  #id start from 1001
+	declare -i max_id_dir
+	for file in "$1"/*; do
+		if [ -d "${file}" ]; then
+			max_id_dir=$(get_max_id_in_dir "${file}")
+			if [[ $max_id_dir > $max_id ]]; then
+				max_id=$max_id_dir
+			fi
+		else
+			fn=$(basename "${file}")
+			[ "$fn" == "*" ] && continue
+			id_str=$(get_id_from_fn "$fn")
+			if [ $(($id_str+0)) -gt $max_id ]; then
+				max_id=$(($id_str+0))
+			fi
+		fi
+	done
+	echo $max_id  #return value!
+}
+function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function add_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
