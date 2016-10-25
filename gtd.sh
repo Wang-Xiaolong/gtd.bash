@@ -88,6 +88,78 @@ function init() {
 	check_and_make_dirs
 }
 
+#=== FILE ATTRIBUTES ==========================================================
+# file name(fn) specification
+# <id>.<ctime>[.-a.<alias>][.-x.<context1>[.context2]...][.-d.<due>]
+# [.-o.<owner>][.-p.<priority>][.-s.<sensitivity>][.-t.<tag1>[.tag2]...]
+# [.-e.<ext>]
+
+function get_id_from_fn() {  #light func just to get id, $1=file.basename
+	id_str=$(echo "$1" | sed -e "s/\..*//g")  #remove chars after dots
+	re='^[0-9]+$'  #check if id is num w/ regular expression
+	if ! [[ $id_str =~ $re ]]; then
+		echo "0"
+	else
+		echo "$id_str"
+	fi
+}
+
+function make_fn() {  #$1=id $2=ctime $3=alias $4=context $5=due $6=owner
+                      #$7=priority $8=sensitiity $9=tag $10=ext
+	str="$1.$2"
+	[ "$3" != "-a" ] && str="$str.$3"
+	[ "$4" != "-x" ] && str="$str.$4"
+	[ "$5" != "-d" ] && str="$str.$5"
+	[ "$6" != "-o" ] && str="$str.$6"
+	[ "$7" != "-p" ] && str="$str.$7"
+	[ "$8" != "-s" ] && str="$str.$8"
+	[ "$9" != "-t" ] && str="$str.$9"
+	[ "${10}" != "-e" ] && str="$str.${10}"
+	echo "$str"
+}
+
+function parse_fn() {  #$1=fn
+	IFS='.' read -ra PARTS <<< "$1"
+	cur="id"
+	id=""; ctime=""; alias="-a"
+	context="-x"; due="-d"; owner="-o"
+	priority="-p"; sensitivity="-s"
+	tag="-t"; ext="-e"
+	for str in "${PARTS[@]}"; do
+		case "$cur" in
+		id) id=$str; cur="ctime";;
+		ctime) ctime=$str; cur="none";;
+		none|context|tag)
+			case "$str" in
+			-a) cur="alias"; continue;;
+			-c) cur="context"; continue;;
+			-d) cur="due"; continue;;
+			-o) cur="owner"; continue;;
+			-p) cur="priority"; continue;;
+			-s) cur="sensitivity"; continue;;
+			-t) cur="tag"; continue;;
+			-e) cur="ext"; continue;;
+			esac
+			if [ "$cur" == "context" ]; then
+				context="$context.$str"
+				continue
+			fi
+			if [ "$cur" == "tag" ]; then
+				tag="$tag.$str"
+				continue
+			fi;;
+		alias) alias="$alias.$str"; cur="none";;
+		due) due="$due.$str"; cur="none";;
+		owner) owner="$owner.$str"; cur="none";;
+		priority) priority="$priority.$str"; cur="none";;
+		sensitivity) sensitivity="$sensitivity.$str"; cur="none";;
+		ext) ext="$ext.$str"; cur="none";;
+		esac
+	done
+	echo "$id $ctime $alias $context $due $owner $priority $sensitivity \
+	  $tag $ext"
+}
+
 #=== ADD ======================================================================
 function usage_add() {  #heredoc
 	cat<<-EOF
@@ -104,21 +176,6 @@ usage: gtd <add-command> [options...]
     --help,        -h  Display this documentation
     --verbose,     -v  Open vim to facilitate complex editing
 	EOF
-}
-
-# file name(fn) specification
-# <id>.<ctime>[.-a.<alias>][.-x.<context1>[.context2]...][.-d.<due>]
-# [.-o.<owner>][.-p.<priority>][.-s.<sensitivity>][.-t.<tag1>[.tag2]...]
-# [.-e.<ext>]
-
-function get_id_from_fn() {  #light func just to get id, $1=file.basename
-	id_str=$(echo "$1" | sed -e "s/\..*//g")  #remove chars after dots
-	re='^[0-9]+$'  #check if id is num w/ regular expression
-	if ! [[ $id_str =~ $re ]]; then
-		echo "0"
-	else
-		echo "$id_str"
-	fi
 }
 
 function get_max_id_in_dir() {  #$1=dir
@@ -342,69 +399,6 @@ usage: gtd view [options...] <id or alias>
     -h, --help
     -v, --verbose
 	EOF
-}
-
-#$1=id $2=ctime $3=alias $4=context $5=due $6=owner $7=priority $8=sensitiity
-#$9=tag $10=ext
-function make_fn() {
-	str="$1.$2"
-	[ "$3" != "-a" ] && str="$str.$3"
-	[ "$4" != "-x" ] && str="$str.$4"
-	[ "$5" != "-d" ] && str="$str.$5"
-	[ "$6" != "-o" ] && str="$str.$6"
-	[ "$7" != "-p" ] && str="$str.$7"
-	[ "$8" != "-s" ] && str="$str.$8"
-	[ "$9" != "-t" ] && str="$str.$9"
-	[ "${10}" != "-e" ] && str="$str.${10}"
-	echo "$str"
-}
-
-function parse_fn() {  #$1=fn
-	IFS='.' read -ra PARTS <<< "$1"
-	cur="id"
-	id=""
-	ctime=""
-	due="-d"
-	alias="-a"
-	context="-x"
-	owner="-o"
-	priority="-p"
-	sensitivity="-s"
-	tag="-t"
-	ext="-e"
-	for str in "${PARTS[@]}"; do
-		case "$cur" in
-		id) id=$str; cur="ctime";;
-		ctime) ctime=$str; cur="none";;
-		none|context|tag)
-			case "$str" in
-			-a) cur="alias"; continue;;
-			-c) cur="context"; continue;;
-			-d) cur="due"; continue;;
-			-o) cur="owner"; continue;;
-			-p) cur="priority"; continue;;
-			-s) cur="sensitivity"; continue;;
-			-t) cur="tag"; continue;;
-			-e) cur="ext"; continue;;
-			esac
-			if [ "$cur" == "context" ]; then
-				context="$context.$str"
-				continue
-			fi
-			if [ "$cur" == "tag" ]; then
-				tag="$tag.$str"
-				continue
-			fi;;
-		alias) alias="$alias.$str"; cur="none";;
-		due) due="$due.$str"; cur="none";;
-		owner) owner="$owner.$str"; cur="none";;
-		priority) priority="$priority.$str"; cur="none";;
-		sensitivity) sensitivity="$sensitivity.$str"; cur="none";;
-		ext) ext="$ext.$str"; cur="none";;
-		esac
-	done
-	echo "$id $ctime $alias $context $due $owner $priority $sensitivity \
-	  $tag $ext"
 }
 
 function print_file_info() {  #$1 is format, $2 is path
