@@ -464,11 +464,10 @@ function view_stuff() {
   	cat "$path" 
 }
 
-#=== SET/UNSET ================================================================
+#=== SET ======================================================================
 function usage_set {  #heredoc
 	cat<<-EOF
 usage: gtd set [options] <items>
-       gtd unset [options] <items>
   options:
     -a, --alias
     -c, --ctime
