@@ -111,6 +111,11 @@ usage: gtd <add-command> [options...]
 	EOF
 }
 
+# file name(fn) specification
+# <id>.<ctime>[.-a.<alias>][.-x.<context1>[.context2]...][.-d.<due>]
+# [.-o.<owner>][.-p.<priority>][.-s.<sensitivity>][.-t.<tag1>[.tag2]...]
+# [.-e.<ext>]
+
 function get_id_from_fn() {  #light func just to get id, $1=file.basename
 	id_str=$(echo "$1" | sed -e "s/\..*//g")  #remove chars after dots
 	re='^[0-9]+$'  #check if id is num w/ regular expression
@@ -344,6 +349,69 @@ usage: gtd view [options...] <id or alias>
 	EOF
 }
 
+#$1=id $2=ctime $3=alias $4=context $5=due $6=owner $7=priority $8=sensitiity
+#$9=tag $10=ext
+function make_fn() {
+	str="$1.$2"
+	[ "$3" != "-a" ] && str="$str.$3"
+	[ "$4" != "-x" ] && str="$str.$4"
+	[ "$5" != "-d" ] && str="$str.$5"
+	[ "$6" != "-o" ] && str="$str.$6"
+	[ "$7" != "-p" ] && str="$str.$7"
+	[ "$8" != "-s" ] && str="$str.$8"
+	[ "$9" != "-t" ] && str="$str.$9"
+	[ "${10}" != "-e" ] && str="$str.${10}"
+	echo "$str"
+}
+
+function parse_fn() {  #$1=fn
+	IFS='.' read -ra PARTS <<< "$1"
+	cur="id"
+	id=""
+	ctime=""
+	due="-d"
+	alias="-a"
+	context="-x"
+	owner="-o"
+	priority="-p"
+	sensitivity="-s"
+	tag="-t"
+	ext="-e"
+	for str in "${PARTS[@]}"; do
+		case "$cur" in
+		id) id=$str; cur="ctime";;
+		ctime) ctime=$str; cur="none";;
+		none|context|tag)
+			case "$str" in
+			-a) cur="alias"; continue;;
+			-c) cur="context"; continue;;
+			-d) cur="due"; continue;;
+			-o) cur="owner"; continue;;
+			-p) cur="priority"; continue;;
+			-s) cur="sensitivity"; continue;;
+			-t) cur="tag"; continue;;
+			-e) cur="ext"; continue;;
+			esac
+			if [ "$cur" == "context" ]; then
+				context="$context.$str"
+				continue
+			fi
+			if [ "$cur" == "tag" ]; then
+				tag="$tag.$str"
+				continue
+			fi;;
+		alias) alias="$alias.$str"; cur="none";;
+		due) due="$due.$str"; cur="none";;
+		owner) owner="$owner.$str"; cur="none";;
+		priority) priority="$priority.$str"; cur="none";;
+		sensitivity) sensitivity="$sensitivity.$str"; cur="none";;
+		ext) ext="$ext.$str"; cur="none";;
+		esac
+	done
+	echo "$id $ctime $alias $context $due $owner $priority $sensitivity \
+	  $tag $ext"
+}
+
 function print_file_info() {  #$1 is format, $2 is path
 	str=$1
 	fn=$(basename "$2")
@@ -395,41 +463,48 @@ usage: gtd set [options] <items>
        gtd unset [options] <items>
   options:
     -a, --alias
-    -c, --context
-    -d, --date
+    -c, --ctime
+    -d, --due
+    -e, --ext
     -o, --owner
     -p, --priority
     -s, --sensitivity
     -t, --tag
+    -x, --context
 	EOF
 }
 
 function set_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	TEMP=`getopt -o ha:c:d:o:p:s:t \
-	  --long help,alias:context:date:owner:priority:sensitivity:tag: \
+	TEMP=`getopt -o ha:x:d:o:p:s:t:e: \
+	  --long help,alias:context:date:owner:priority:sensitivity:tag:ext: \
 	  -n 'gtd.set' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
+
 	to_help=false
+	ctime=""
 	alias=""
 	context=""
-	date=""
+	due=""
 	owner=""
 	priority=""
 	sensitivity=""
 	tag=""
+	ext="txt"
 	item=""
 	while : ; do
 		case "$1" in
 		-h|--help) to_help=true; shift;;
 		-a|--alias) alias=$2; shift 2;;
-		-c|--context) context=$2; shift 2;;
-		-d|--date) date=$2; shift 2;;
+		-c|--ctime) ctime=$2; shift 2;;
+		-x|--context) context=$2; shift 2;;
+		-d|--due) due=$2; shift 2;;
 		-o|--owner) owner=$2; shift 2;;
 		-p|--priority) priority=$2; shift 2;;
 		-s|--sensitivity) sensitivity=$2; shift 2;;
 		-t|--tag) tag=$2; shift 2;;
+		-e|--ext) ext=$2; shift 2;;
 		--) shift; item="$1"; break;;  #no option args!
 		*) echo "Unknown option: $1"; return;;
 		esac
@@ -439,13 +514,18 @@ function set_stuff() {
 	[ -z "$path" ] && echo "$item not found." && return
 	dir=$(dirname "$path")
 	fn=$(basename "$path")
-	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
-	new_fn=${PARTS[0]}  #id
-	if [ ! -z $date ]; then
-		new_fn="$new_fn.$(date -d"$date" +%s)"
-	else
-		new_fn="$new_fn.${PARTS[1]}"
-	fi
+	declare -a fn_arr=($(parse_fn "$fn"))
+	echo ${fn_arr[@]}
+	[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
+	[ ! -z "$alias" ] && fn_arr[2]="-a.$alias"
+	[ ! -z "$context" ] && fn_arr[3]="-x.$context"
+	[ ! -z "$due" ] && fn_arr[4]="-d.$(date -d"$due" +%s)"
+	[ ! -z "$owner" ] && fn_arr[5]="-o.$owner"
+	[ ! -z "$priority" ] && fn_arr[6]="-p.$priority"
+	[ ! -z "$sensitivity" ] && fn_arr[7]="-s.$sensitivity"
+	[ ! -z "$tag" ] && fn_arr[8]="-t.$tag"
+	[ ! -z "$ext" ] && fn_arr[9]="-e.$ext"
+	new_fn="$(make_fn ${fn_arr[@]})"
 	[ $new_fn != $fn ] && mv "$path" "$dir/$new_fn"
 }
 
