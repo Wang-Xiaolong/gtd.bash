@@ -21,12 +21,7 @@ The most commonly used gtd commands are:
 	EOF
 }
 
-debug=false
-function debug() {
-	if [ $debug == true ]; then
-		>&2 echo "$@"
-	fi  #can't be 1-line fmt - cause the func return [ $debug == true ]
-}
+function debug() { >&2 echo "$@"; }
 
 #=== INIT =====================================================================
 function usage_init() {  #heredoc
@@ -634,14 +629,6 @@ in_shell=false
 function process_command() {
 	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
 
-	for arg in "$@"; do  #general flag: debug/version
-		case $arg in
-		--debug) debug=true;;
-		--version) echo "0.01 2016-10-10 paulo.dx@gmail.com"
-			return 0;;
-		esac
-	done
-
 	case "$1" in  #$1 is command
 	init) shift; init "$@";;
 	add|a) shift; add_stuff "$GTD_INBOX" "$@";;
@@ -679,6 +666,7 @@ function process_command() {
 	exit) [ $in_shell == true ] && in_shell=false \
 	  || echo "exit is a gtd shell command.";;
 	help|-h|--help|-\?) usage;;
+	version) echo "0.01 2016-10-10 paulo.dx@gmail.com";;
 	*) echo "Incorrect command: $1"; usage;;
 	esac
 	return 0
