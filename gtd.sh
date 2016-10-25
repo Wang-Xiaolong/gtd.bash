@@ -172,6 +172,16 @@ function parse_fn() {  #$1=fn
 	  $tag $ext"
 }
 
+function parse_fn_item {  #$1=fn_item:alias...ext
+	IFS='.' read -ra PARTS <<< "$1"
+	for str in "${PARTS[@]}"; do
+		case "$str" in
+		-a|-x|-d|-o|-p|-s|-t|-e) continue;;
+		*) echo "$str";;
+		esac
+	done
+}
+
 function make_fn() {  #$1=id $2=ctime $3=alias $4=context $5=due $6=owner
                       #$7=priority $8=sensitiity $9=tag $10=ext
 	str="$1.$2"
@@ -217,6 +227,8 @@ function print_file_info() {  #$1=format, $2=path
 	str=$(echo "$str" | sed -r "s/%c/$create_time/g")
 	update_time="$(date "+%F %H:%M" -r "$2")"
 	str=$(echo "$str" | sed -r "s/%u/$update_time/g")
+	alias=$(parse_fn_item ${fn_arr[2]})
+	str=$(echo "$str" | sed -r "s/%a/$alias/g")
 	echo "$str"
 }
 
@@ -447,7 +459,7 @@ function view_stuff() {
 			return
 		fi
 	fi 
-	print_file_info "[%i] created@%c  updated@%u" "$path"
+	print_file_info "id:%i alias:%a created@%c updated@%u" "$path"
 	printf '%0.s-' $(seq 1 $(tput cols))  #print a separate line
   	cat "$path" 
 }
@@ -567,10 +579,10 @@ function list_stuff() {  #$1=dir
 	for fn in $(ls "$dir/" | sort -n -t '.' -k 1); do
 		path="$dir/$fn"
 		if [ $verbose == true ]; then  #id, create/update time
-			print_file_info "[%i] created@%c  updated@%u" "$path"
+			print_file_info "%i %a created@%c  updated@%u" "$path"
 			echo "$(cat "$path")"  # and content
 		else  #brief: just id and the 1st line
-			echo -e "[$(get_id_from_fn "$fn")]\t" \
+			echo -e "$(get_id_from_fn "$fn")\t" \
 			  "$(head -n 1 "$path")"
 		fi
 	done
