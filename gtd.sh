@@ -206,6 +206,18 @@ function get_file_in_dir() {  #$1= path, $2=id|alias
 }
 function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
+function print_file_info() {  #$1 is format, $2 is path
+	str=$1
+	fn=$(basename "$2")
+	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
+	str=$(echo "$str" | sed -r "s/%i/${PARTS[0]}/g")
+	create_time=$(date --date="@${PARTS[1]}" "+%F %H:%M")
+	str=$(echo "$str" | sed -r "s/%ct/$create_time/g")
+	update_time="$(date "+%F %H:%M" -r "$2")"
+	str=$(echo "$str" | sed -r "s/%ut/$update_time/g")
+	echo "$str"
+}
+
 #=== ADD ======================================================================
 function usage_add() {  #heredoc
 	cat<<-EOF
@@ -404,18 +416,6 @@ usage: gtd view [options...] <id or alias>
     -h, --help
     -v, --verbose
 	EOF
-}
-
-function print_file_info() {  #$1 is format, $2 is path
-	str=$1
-	fn=$(basename "$2")
-	IFS='.' read -ra PARTS <<< "$fn"  #split w/ Internal Field Separator
-	str=$(echo "$str" | sed -r "s/%i/${PARTS[0]}/g")
-	create_time=$(date --date="@${PARTS[1]}" "+%F %H:%M")
-	str=$(echo "$str" | sed -r "s/%ct/$create_time/g")
-	update_time="$(date "+%F %H:%M" -r "$2")"
-	str=$(echo "$str" | sed -r "s/%ut/$update_time/g")
-	echo "$str"
 }
 
 function view_stuff() {
