@@ -104,19 +104,27 @@ function get_id_from_fn() {  #light func just to get id, $1=file.basename
 	fi
 }
 
-function make_fn() {  #$1=id $2=ctime $3=alias $4=context $5=due $6=owner
-                      #$7=priority $8=sensitiity $9=tag $10=ext
-	str="$1.$2"
-	[ "$3" != "-a" ] && str="$str.$3"
-	[ "$4" != "-x" ] && str="$str.$4"
-	[ "$5" != "-d" ] && str="$str.$5"
-	[ "$6" != "-o" ] && str="$str.$6"
-	[ "$7" != "-p" ] && str="$str.$7"
-	[ "$8" != "-s" ] && str="$str.$8"
-	[ "$9" != "-t" ] && str="$str.$9"
-	[ "${10}" != "-e" ] && str="$str.${10}" || str="$str.-e.txt"
-	echo "$str"
+function get_max_id_in_dir() {  #$1=dir
+	declare -i max_id=1000  #id start from 1001
+	declare -i max_id_dir
+	for file in "$1"/*; do
+		if [ -d "${file}" ]; then
+			max_id_dir=$(get_max_id_in_dir "${file}")
+			if [[ $max_id_dir > $max_id ]]; then
+				max_id=$max_id_dir
+			fi
+		else
+			fn=$(basename "${file}")
+			[ "$fn" == "*" ] && continue
+			id_str=$(get_id_from_fn "$fn")
+			if [ $(($id_str+0)) -gt $max_id ]; then
+				max_id=$(($id_str+0))
+			fi
+		fi
+	done
+	echo $max_id  #return value!
 }
+function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function parse_fn() {  #$1=fn
 	IFS='.' read -ra PARTS <<< "$1"
@@ -160,6 +168,40 @@ function parse_fn() {  #$1=fn
 	  $tag $ext"
 }
 
+function make_fn() {  #$1=id $2=ctime $3=alias $4=context $5=due $6=owner
+                      #$7=priority $8=sensitiity $9=tag $10=ext
+	str="$1.$2"
+	[ "$3" != "-a" ] && str="$str.$3"
+	[ "$4" != "-x" ] && str="$str.$4"
+	[ "$5" != "-d" ] && str="$str.$5"
+	[ "$6" != "-o" ] && str="$str.$6"
+	[ "$7" != "-p" ] && str="$str.$7"
+	[ "$8" != "-s" ] && str="$str.$8"
+	[ "$9" != "-t" ] && str="$str.$9"
+	[ "${10}" != "-e" ] && str="$str.${10}" || str="$str.-e.txt"
+	echo "$str"
+}
+
+function get_file_in_dir() {  #$1= path, $2=id|alias
+	result=""
+	for file in "$1"/*; do
+		if [ -d "${file}" ]; then
+			result=$(get_file_in_dir "${file}" $2)
+			[ ! -z $result ] && break
+		else
+			fn=$(basename "${file}")
+			[ "$fn" == "*" ] && continue
+			id_str=$(get_id_from_fn "$fn")
+			if [ "$id_str" == "$2" ]; then
+				result=$file
+				break
+			fi
+		fi
+	done
+	echo "$result"  #return value!
+}
+function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
+
 #=== ADD ======================================================================
 function usage_add() {  #heredoc
 	cat<<-EOF
@@ -177,28 +219,6 @@ usage: gtd <add-command> [options...]
     --verbose,     -v  Open vim to facilitate complex editing
 	EOF
 }
-
-function get_max_id_in_dir() {  #$1=dir
-	declare -i max_id=1000  #id start from 1001
-	declare -i max_id_dir
-	for file in "$1"/*; do
-		if [ -d "${file}" ]; then
-			max_id_dir=$(get_max_id_in_dir "${file}")
-			if [[ $max_id_dir > $max_id ]]; then
-				max_id=$max_id_dir
-			fi
-		else
-			fn=$(basename "${file}")
-			[ "$fn" == "*" ] && continue
-			id_str=$(get_id_from_fn "$fn")
-			if [ $(($id_str+0)) -gt $max_id ]; then
-				max_id=$(($id_str+0))
-			fi
-		fi
-	done
-	echo $max_id  #return value!
-}
-function get_max_id() { get_max_id_in_dir "$GTD_ROOT"; }  #';' is must
 
 function add_stuff() {  #$1=dir
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
@@ -257,26 +277,6 @@ usage: gtd <move-command> [options...] <id or alias>
     to-trash
 	EOF
 }
-
-function get_file_in_dir() {  #$1= path, $2=id|alias
-	result=""
-	for file in "$1"/*; do
-		if [ -d "${file}" ]; then
-			result=$(get_file_in_dir "${file}" $2)
-			[ ! -z $result ] && break
-		else
-			fn=$(basename "${file}")
-			[ "$fn" == "*" ] && continue
-			id_str=$(get_id_from_fn "$fn")
-			if [ "$id_str" == "$2" ]; then
-				result=$file
-				break
-			fi
-		fi
-	done
-	echo "$result"  #return value!
-}
-function get_file() { get_file_in_dir "$GTD_ROOT" "$1"; }  #$1=id|alias
 
 function move() {  #$1=target dir, $2=path
 	[ -z "$2" ] && echo "not_found" && return
