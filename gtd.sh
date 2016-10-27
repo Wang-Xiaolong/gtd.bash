@@ -499,7 +499,7 @@ function set_stuff() {
 	sensitivity=""
 	tag=""
 	ext="txt"
-	item=""
+	items=""
 	while : ; do
 		case "$1" in
 		-h|--help) to_help=true; shift;;
@@ -521,28 +521,38 @@ function set_stuff() {
 		-s|--sensitivity) sensitivity=$2; shift 2;;
 		-t|--tag) tag=$2; shift 2;;
 		-e|--ext) ext=$2; shift 2;;
-		--) shift; item="$1"; break;;  #no option args!
+		--) shift; items="$1"; break;;  #no option args!
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 	[ $to_help == true ] && usage_set && return
-	path=$(get_file $item)
-	[ -z "$path" ] && echo "$item not found." && return
-	dir=$(dirname "$path")
-	fn=$(basename "$path")
-	declare -a fn_arr=($(parse_fn "$fn"))
-	echo ${fn_arr[@]}
-	[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
-	[ ! -z "$alias" ] && fn_arr[2]="$alias"
-	[ ! -z "$context" ] && fn_arr[3]="-x.$context"
-	[ ! -z "$due" ] && fn_arr[4]="-d.$(date -d"$due" +%s)"
-	[ ! -z "$owner" ] && fn_arr[5]="-o.$owner"
-	[ ! -z "$priority" ] && fn_arr[6]="-p.$priority"
-	[ ! -z "$sensitivity" ] && fn_arr[7]="-s.$sensitivity"
-	[ ! -z "$tag" ] && fn_arr[8]="-t.$tag"
-	[ ! -z "$ext" ] && fn_arr[9]="-e.$ext"
-	new_fn="$(make_fn ${fn_arr[@]})"
-	[ $new_fn != $fn ] && mv "$path" "$dir/$new_fn"
+	[ -z "$items" ] && echo "No item specified." && return
+	IFS="," read -r -a item_array <<< "$items"
+	if [ "${#item_array[@]}" != "1" ]; then  #multi items, '#'->array len
+		if [ ! -z "$alias" ] && [ "$alias" != "-a" ]; then
+			echo "Can't set alias to multiple items."
+			return
+		fi
+	fi
+	for item in "${item_array[@]}"; do
+		path=$(get_file "$item")
+		[ -z "$path" ] && echo "$item not found." && continue
+		dir=$(dirname "$path")
+		fn=$(basename "$path")
+		declare -a fn_arr=($(parse_fn "$fn"))
+		echo ${fn_arr[@]}
+		[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
+		[ ! -z "$alias" ] && fn_arr[2]="$alias"
+		[ ! -z "$context" ] && fn_arr[3]="-x.$context"
+		[ ! -z "$due" ] && fn_arr[4]="-d.$(date -d"$due" +%s)"
+		[ ! -z "$owner" ] && fn_arr[5]="-o.$owner"
+		[ ! -z "$priority" ] && fn_arr[6]="-p.$priority"
+		[ ! -z "$sensitivity" ] && fn_arr[7]="-s.$sensitivity"
+		[ ! -z "$tag" ] && fn_arr[8]="-t.$tag"
+		[ ! -z "$ext" ] && fn_arr[9]="-e.$ext"
+		new_fn="$(make_fn ${fn_arr[@]})"
+		[ $new_fn != $fn ] && mv "$path" "$dir/$new_fn"
+	done
 }
 
 #=== LIST =====================================================================
