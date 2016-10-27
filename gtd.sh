@@ -464,15 +464,16 @@ function view_stuff() {
   	cat "$path" 
 }
 
-#=== SET ======================================================================
+#=== SET/UNSET ================================================================
 function usage_set {  #heredoc
 	cat<<-EOF
 usage: gtd set [options] <items>
-  options:
-    -a, --alias        set alias, no value will clear the alias set.
-    -c, --ctime
+       gtd unset [options] <items>
+  options: set options need argument as value, unset options generally doesn't.
+    -a, --alias
+    -c, --ctime        can't be unset.
     -d, --due
-    -e, --ext
+    -e, --ext          unset will return to default 'txt'
     -o, --owner
     -p, --priority
     -s, --sensitivity
