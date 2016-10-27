@@ -483,7 +483,7 @@ usage: gtd set [options] <items>
 
 function set_stuff() {
 	[ $(check_dirs) == false ] && echo "$NO_DIR" && return
-	TEMP=`getopt -o hc:a::x:d:o:p:s:t:e: --long help,ctime:,alias::\
+	TEMP=`getopt -o hc:a:x:d:o:p:s:t:e: --long help,ctime:,alias:\
 	  --long context:,date:,owner:,priority:,sensitivity:,tag:,ext: \
 	  -n 'gtd.set' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
@@ -497,16 +497,12 @@ function set_stuff() {
 	while : ; do
 		case "$1" in
 		-h|--help) to_help=true; shift;;
-		-a|--alias)
-			#empty value means unset
-			[ -z "$2" ] && alias="-a" && shift 2 && continue
-			alias_dup=$(get_file $2)
+		-a|--alias) alias_dup=$(get_file $2)
 			if [ ! -z $alias_dup ]; then
 				alias_id="$(get_id_from_path $alias_dup)"
 				echo "Alias $2 is being used by $alias_id."
 			fi
-			alias="-a.$2"
-			shift 2;;
+			alias=$2; shift 2;;
 		-c|--ctime) ctime=$2; shift 2;;
 		-x|--context) context=$2; shift 2;;
 		-d|--due) due=$2; shift 2;;
@@ -523,7 +519,7 @@ function set_stuff() {
 	[ -z "$items" ] && echo "No item specified." && return
 	IFS="," read -r -a item_array <<< "$items"
 	if [ "${#item_array[@]}" != "1" ]; then  #multi items, '#'->array len
-		if [ ! -z "$alias" ] && [ "$alias" != "-a" ]; then
+		if [ ! -z "$alias" ]; then
 			echo "Can't set alias to multiple items."
 			return
 		fi
@@ -536,7 +532,7 @@ function set_stuff() {
 		declare -a fn_arr=($(parse_fn "$fn"))
 		echo ${fn_arr[@]}
 		[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
-		[ ! -z "$alias" ] && fn_arr[2]="$alias"
+		[ ! -z "$alias" ] && fn_arr[2]="-a.$alias"
 		[ ! -z "$context" ] && fn_arr[3]="-x.$context"
 		[ ! -z "$due" ] && fn_arr[4]="-d.$(date -d"$due" +%s)"
 		[ ! -z "$owner" ] && fn_arr[5]="-o.$owner"
