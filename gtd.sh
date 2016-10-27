@@ -490,14 +490,8 @@ function set_stuff() {
 	eval set -- "$TEMP"
 
 	to_help=false
-	ctime=""
-	alias=""
-	context=""
-	due=""
-	owner=""
-	priority=""
-	sensitivity=""
-	tag=""
+	ctime=""; alias=""; context=""; due=""; owner=""
+	priority=""; sensitivity=""; tag=""
 	ext="txt"
 	items=""
 	while : ; do
