@@ -207,7 +207,7 @@ function print_file_info() {  #$1=format, $2=path
 	str=$(echo "$str" | sed -r "s/%u/$update_time/g")
 	alias=$(parse_fn_item ${fn_arr[2]})
 	str=$(echo "$str" | sed -r "s/%a/$alias/g")
-	echo "$str"
+	echo -e "$str"
 }
 
 #=== ADD ======================================================================
