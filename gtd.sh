@@ -504,6 +504,7 @@ function set_stuff() {
 			if [ ! -z $alias_dup ]; then
 				alias_id="$(get_id_from_path $alias_dup)"
 				echo "Alias $2 is being used by $alias_id."
+				return
 			fi
 			alias="-a.$2"; shift 2;;
 		-c|--ctime) ctime=$2; shift 2;;
