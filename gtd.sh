@@ -528,14 +528,17 @@ function set_stuff() {
 		fi
 	fi
 	for item in "${item_array[@]}"; do
+		str="$item:"
 		path=$(get_file "$item")
 		[ -z "$path" ] && echo "$item not found." && continue
 		dir=$(dirname "$path")
 		fn=$(basename "$path")
 		declare -a fn_arr=($(parse_fn "$fn"))
-		echo ${fn_arr[@]}
+		old_ctime=$(date --date="@${fn_arr[1]}" "+%F %H:%M")
+		old_alias=$(parse_fn_item "${fn_arr[2]}")
 		[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
-		[ ! -z "$alias" ] && fn_arr[2]="$alias"
+		[ ! -z "$alias" ] && fn_arr[2]="$alias" \
+		  && str="$str alias:$old_alias->$(parse_fn_item $alias)"
 		[ ! -z "$context" ] && fn_arr[3]="-x.$context"
 		[ ! -z "$due" ] && fn_arr[4]="-d.$(date -d"$due" +%s)"
 		[ ! -z "$owner" ] && fn_arr[5]="-o.$owner"
@@ -545,6 +548,7 @@ function set_stuff() {
 		[ ! -z "$ext" ] && fn_arr[9]="-e.$ext"
 		new_fn="$(make_fn ${fn_arr[@]})"
 		[ $new_fn != $fn ] && mv "$path" "$dir/$new_fn"
+		echo "$str"
 	done
 }
 
