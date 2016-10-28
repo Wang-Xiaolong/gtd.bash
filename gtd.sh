@@ -536,7 +536,8 @@ function set_stuff() {
 		declare -a fn_arr=($(parse_fn "$fn"))
 		old_ctime=$(date --date="@${fn_arr[1]}" "+%F %H:%M")
 		old_alias=$(parse_fn_item "${fn_arr[2]}")
-		[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)"
+		[ ! -z "$ctime" ] && fn_arr[1]="$(date -d"$ctime" +%s)" \
+		  && str="$str ctime:$old_ctime->$ctime"
 		[ ! -z "$alias" ] && fn_arr[2]="$alias" \
 		  && str="$str alias:$old_alias->$(parse_fn_item $alias)"
 		[ ! -z "$context" ] && fn_arr[3]="-x.$context"
