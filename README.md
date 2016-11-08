@@ -44,4 +44,51 @@ Do                  ↓    to-log↓ ┌─────┐ ↓
                     └──────────┴→│ Log │←┘
 Review                           └─────┘
 ```
+## Concept
+As in the above flow chart, everything are organized in the 8 boxes.
+Each thing is represented as an decimal 'id', and has a few attributes.
+A few commands can be used to operate your stuff library.
+### The Boxes
+```
+Box Name   Abbr.
+inbox      i
+todo       t
+wait       w
+project    p
+log        l
+reference  r
+someday    s
+trash      h
+```
 
+### The Commands
+```
+Command    Abbr.
+init
+add        a
+remove     rm
+to         t
+view       v
+edit       e
+list       l
+set        s
+unset      u
+install
+shell
+```
+
+### The Attributes
+```
+Attribute    Abbr.
+ctime        c
+utime        u
+context      x
+due          d
+owner        w
+priority     p
+sensitivity  s
+category     g
+tag          t
+parent       r
+type         y
+```
