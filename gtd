@@ -375,6 +375,8 @@ function gtd_shell() {
 	done
 }
 #=== MAIN ======================================================================
+[ $# -eq 0 ] && usage && exit # bkm for no arg check
+
 if [[ "$0" == *"bash" ]]; then # when run in current shell (". gtd",
   # I call it exe-in-this-shell), $0 is the path of the bash.
   # init should run in this mode to keep the variables in current shell.
@@ -391,6 +393,7 @@ if [[ "$0" == *"bash" ]]; then # when run in current shell (". gtd",
 	# +PATH to make gtd a command, no need for the 2nd init
 	[[ ! "$PATH" =~ "$code_dir" ]] && export PATH="$PATH:$code_dir"
 
+	#TODO put all alias into config file
 	alias gtda='gtd a'
 	alias gtdl='gtd l'
 	alias gtde='gtd e'
