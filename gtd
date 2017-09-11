@@ -135,17 +135,14 @@ Usage: gtd add [OPTION]...
 }
 
 function gtd_add() {
-	TEMP=`getopt -o hvef:m:t: \
-	  --long help,verbose,edit,file:,message:,template:,time: \
+	TEMP=`getopt -o ef:m:t: \
+	  --long edit,file:,message:,template:,time: \
 	  -n 'gtd.add' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	to_help=false; verbose=false
 	path=""; message=""; template=""; time=""; edit=false;
 	while : ; do
 		case "$1" in
-		-h|--help) to_help=true; shift;;
-		-v|--verbose) verbose=true; shift;;
 		-e|--edit) edit=true; shift;;
 		-f|--file) path="$2"; shift 2;;
 		-m|--message) message="$2"; shift 2;;
@@ -155,7 +152,7 @@ function gtd_add() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_add && return
+	[ $help_me == true ] && usage_add && return
 
 	path=`fs_get_new_fp`
 	if [ ! -z "$message" ]; then
@@ -195,23 +192,20 @@ Usage:
 }
 
 function gtd_list() {
-	TEMP=`getopt -o ab:hv --long apple,banana:,help,verbose \
+	TEMP=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.list' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	to_help=false; verbose=false
 	apple=false; banana=""
 	while : ; do
 		case "$1" in
-		-h|--help) to_help=true; shift;;
-		-v|--verbose) verbose=true; shift;;
 		-a|--apple) apple=true; shift;;
 		-b|--banana) banana="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_list && return
+	[ $help_me == true ] && usage_list && return
 	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
 		fs_print_fi "$fn" "1n"
 	done
@@ -236,21 +230,19 @@ Options:
 #TODO: test the options choosing the editor
 
 function gtd_edit() {
-	TEMP=`getopt -o e:hv --long editor:,help,verbose \
+	TEMP=`getopt -o e: --long editor: \
 	  -n 'gtd.edit' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	to_help=false; verbose=false; editor=""
+	editor=""
 	while : ; do
 		case "$1" in
-		-h|--help) to_help=true; shift;;
-		-v|--verbose) verbose=true; shift;;
 		-e|--editor) banana="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_edit && return
+	[ $help_me == true ] && usage_edit && return
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
 			cfg=`get_config editor`
@@ -303,22 +295,18 @@ Options:
 }
 
 function gtd_test() {
-	TEMP=`getopt -o t:hv --long task:,help,verbose -n 'gtd.test' -- "$@"`
+	TEMP=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	to_help=false
-	verbose=false
 	task=""
 	while : ; do
 		case "$1" in
-		-h|--help) to_help=true; shift;;
-		-v|--verbose) verbose=true; shift;;
 		-t|--task) task="$2" shift 2;; #TODO:support multi task
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_test && return
+	[ $help_me == true ] && usage_test && return
 	fn=`fs_id2fn 1006`
 	fs_parse_fn $fn
 }
@@ -336,13 +324,14 @@ function process_command() {
 	case "$1" in  #$1 is command
 	init) echo "init should be run from current shell: '. $0 init'";;
 	a|add) shift; gtd_add "$@";;
+	  # only "$@" can trans args properly, $@/$*/"$*" can't.
 	l|ls|list) shift; gtd_list "$@";;
 	e|edit) shift; gtd_edit "$@";;
 	shell) [ $in_shell == false ] && gtd_shell "$@"\
 	  || echo "We are already in gtd shell.";;
   	exit) [ $in_shell == true ] && in_shell=false \
 	  || echo "exit is a gtd shell command.";;
-  	help|-h|--help|-\?) usage;;
+  	help) usage;;
 	version) echo "0.02 2017-08-24 paulo.dx@gmail.com";;
 	test) shift; gtd_test "$@";;
 	*) echo "Incorrect command: $1"; usage;;
@@ -351,19 +340,7 @@ function process_command() {
 }
 
 function gtd_shell() {
-	shift # bypass 'shell'
-	TEMP=`getopt -o h --long help -n 'gtd.shell' -- "$@"`
-	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
-	to_help=false
-	while : ; do
-		case "$1" in
-		-h|--help) to_help=true; shift;;
-		--) shift; break;;
-		*) echo "Unknown option: $1"; return;;
-		esac
-	done
-	[ $to_help == true ] && usage_shell && return
+	[ $help_me == true ] && usage_shell && return
 
 	in_shell=true
 	while : ; do # infinite loop
@@ -385,7 +362,7 @@ if [[ "$0" == *"bash" ]]; then # when run in current shell (". gtd",
 		return
 	fi
 	# init
-	# BKM to get the dir path of the script file
+	# bkm to get the dir path of the script file
 	code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 	echo "GTD_ROOT=$code_dir"
 	export GTD_ROOT="$code_dir" # files are with the script
@@ -403,9 +380,20 @@ fi
 [ -z "$GTD_ROOT" ] && echo "No GTD_ROOT specified."\
   && echo "Please run '. $0 init' first." && exit 0
 
-[ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
-process_command "$@"  #only "$@" can trans things properly, $@/$*/"$*" can't.
+# process help & verbose in 1 place
+args=() # empty array
+help_me=false
+verbose=false
+for arg in "$@"; do
+	case "$arg" in
+	'-?'|-h|--help) help_me=true;; # ? is a wildcard if not br by ''
+	-v|--verbose) verbose=true;; # no pass help/verbose any longer
+	*) args+=("$arg");;
+	esac
+done
 
+[ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
+process_command "${args[@]}"
 #=== Template ==================================================================
 function usage_template() {
 	cat<<-EOF
@@ -418,21 +406,18 @@ Options:
 }
 
 function gtd_template() {
-	TEMP=`getopt -o ab:hv --long apple,banana:,help,verbose \
+	TEMP=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.template' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	to_help=false; verbose=false
 	apple=false; banana=""
 	while : ; do
 		case "$1" in
-		-h|--help) to_help=true; shift;;
-		-v|--verbose) verbose=true; shift;;
 		-a|--apple) apple=true; shift;;
 		-b|--banana) banana="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $to_help == true ] && usage_template && return
+	[ $help_me == true ] && usage_template && return
 }
