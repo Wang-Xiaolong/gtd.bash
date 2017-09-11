@@ -1,0 +1,435 @@
+#!/usr/bin/env bash
+# env here is to use the 1st bash in $PATH -- it's a BKM
+
+function usage() {  #heredoc
+	cat<<-EOF
+gtd = Getting Things Done
+Collect and manage your ideas, todos, logs and files.
+Usage:
+  . gtd init
+  gtd [-h|--help|-?]
+  gtd <command> [<args>]
+
+The most commonly used gtd commands are:
+  init		Make the gtd command available.
+  add		Add a new file to the library.
+  remove	Remove files from the library.
+  list		List files in the library.
+  view		View a file in the library.
+  edit		Edit a file in the library.
+  set		Set the attributes of a file in the library.
+	EOF
+}
+
+function debug() { >&2 echo "$@"; }
+
+#=== THE FILE SYSTEM ===========================================================
+# Every object in the library is a file.
+# Files are stored in directories named by their create years, e.g.
+#   2016/ 2017/ 2018/ ...
+# The name of a file contains its attributes, e.g.
+#   20170829103244.id=1001.alias=coding_style.tag=script,todo,closed.txt
+# Attributes are separated by a dot '.',
+# The first attribute is the create time, in the format of yyyymmddHHMMSS, e.g.
+#   20170829103244
+# The last attribute is the type or ext of the file, could be anything, e.g.
+#   txt, log, doc, ppt, jpg ... the default created type is mt, the marktree.
+# The attributes in the middle need to be formatted as
+#   attribute=value or attribute=value1,value2,... e.g.
+#   id=1001 or category=home,office,car
+
+GTD_ID_BASE=1000
+function fs_get_max_id() { # no arg; +1 to create new id number
+	res=`ls "$GTD_ROOT" -R -1 | grep ".id=" | cut -d '.' -f 2 \
+	  | cut -d '=' -f 2 | sort -n | tail -n1`
+	[ -z "$res" ] && echo "$GTD_ID_BASE" || echo "$res"
+}
+
+function fs_get_new_fn() { # fn: file name;
+	date=`date +%Y%m%d%H%M%S`
+	id=$(( `fs_get_max_id` + 1 ))
+	echo "$date.id=$id.mt"
+}
+
+function fs_fn2fp() { # fp: file path; $1=fn
+	year=${1:0:4}
+	echo "$GTD_ROOT/$year/$1"
+}
+
+function fs_get_new_fp() {
+	fn=`fs_get_new_fn`
+	fs_fn2fp "$fn"
+}
+
+function fs_id2fn() { # $1=id
+	ls -R -r -1 "$GTD_ROOT" | grep ".id=$1."
+}
+
+function fs_id2fp() { # $1=id
+	fn=`fs_id2fn "$1"`
+	[ -z "$fn" ] && return
+	fs_fn2fp "$fn"
+}
+
+function fs_parse_fn() { # $1=fn; fn->fields
+	IFS='.' read -ra PARTS <<< "$1"
+	for str in "${PARTS[@]}"; do
+		echo $str
+	done
+	echo "${PARTS[0]}" # time
+	echo "${PARTS[-1]}" # type
+}
+
+function fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
+  # 0 -- file info only, 1 line
+  # 1 -- file info and 1 content line, 1 or 2 lines
+  # 2+ -- file info and 2+ content line
+  # v -- file info and view all content
+	IFS='.' read -ra PARTS <<< "$1"
+	ct="${PARTS[0]}" # create time
+	cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
+	id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
+	ext="${PARTS[-1]}"
+	fp=`fs_fn2fp $1` # file path
+	if [ "$2" == "1n" ]; then # put 1n here is improve 1n perf
+		[ "$ext" == "mt" ] && \
+		  n1=`head -n1 "$fp" | sed 's/<mt.*>//g'` \
+		  || n1="[$ext]"
+		echo "[$cts] $id: $n1"
+		return
+	fi
+#	for field in "${PARTS[@]}"; do # get all other fields
+#		echo $str
+#	done
+	case "$2" in
+	2n) echo ;;
+	8n) echo ;;
+	full) echo ;;
+	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
+	esac
+}
+#==- THE LOCAL CONFIG FILE: .gtdrc =============================================
+function get_config { # $1=key
+  # return values:
+  # "no arg" when $1 is empty
+  # "no file" when there is no .gtdrc file;
+  # "no key" when there is no key as $1 specified;
+  # value of key, when the key line was found
+	[ -z "$1" ] && echo "no arg" && return
+	[ ! -f "$GTD_ROOT/.gtdrc" ] && echo "no file" && return
+	line=`grep "^$1=" "$GTD_ROOT/.gtdrc"`
+	[ -z "$line" ] && echo "no key" && return
+	echo "$line" | cut -d "=" -f 2
+}
+#=== ADD =======================================================================
+function usage_add() {
+	cat<<-EOF
+Usage: gtd add [OPTION]...
+
+  -f, --file=PATH
+  -m, --message=MESSAGE
+  -e, --edit
+      --template=TEMPLATE
+  -t, --time=TIME
+	EOF
+}
+
+function gtd_add() {
+	TEMP=`getopt -o hvef:m:t: \
+	  --long help,verbose,edit,file:,message:,template:,time: \
+	  -n 'gtd.add' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false; verbose=false
+	path=""; message=""; template=""; time=""; edit=false;
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-v|--verbose) verbose=true; shift;;
+		-e|--edit) edit=true; shift;;
+		-f|--file) path="$2"; shift 2;;
+		-m|--message) message="$2"; shift 2;;
+		--template) template="$2"; shift 2;;
+		-t|--time) time="$2"; shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_add && return
+
+	path=`fs_get_new_fp`
+	if [ ! -z "$message" ]; then
+		install -D /dev/null "$path"
+		echo "$message" > "$path"
+		echo "`basename $path` created."
+		return
+	fi
+
+	if [ $edit == true ]; then
+		[ -z $GIT_EDITOR ] && echo "GIT_EDITOR not specified." && return
+		install -D /dev/null "$path"
+		$GIT_EDITOR "$path"
+		return
+	fi
+
+	echo "Any stuff, please (ctrl-d to end, ctrl-c to cancel):"
+	[ $in_shell == true ] && trap "echo; return" INT
+	input=`cat` # save keyin until eof
+	if [ -z `echo $input | tr -d '[:space:]'` ]; then # empty check
+		echo "Nothing!"
+		return
+	fi
+	install -D /dev/null "$path"
+	echo "$input" > "$path"
+	echo "`basename $path` created."
+}
+#=== LIST ======================================================================
+function usage_list() {
+	cat<<-EOF
+Usage:
+  gtd list [OPTION]...
+  gtd list [OPTION]...
+
+  -o, --option=VALUE  Meaning
+	EOF
+}
+
+function gtd_list() {
+	TEMP=`getopt -o ab:hv --long apple,banana:,help,verbose \
+	  -n 'gtd.list' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false; verbose=false
+	apple=false; banana=""
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-v|--verbose) verbose=true; shift;;
+		-a|--apple) apple=true; shift;;
+		-b|--banana) banana="$2"; shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_list && return
+	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
+		fs_print_fi "$fn" "1n"
+	done
+}
+#=== Edit =====================================================================
+function usage_edit() {
+	cat<<-EOF
+Usage: gtd edit [OPTION]... <id or alias>
+Edit a file with a specified editor.
+The file is specified by its id or alias.
+The editor can be specified with the following method (sorted by priority):
+  1. Use option -e or --editor
+  2. Use GTD_EDITOR variable
+  3. Use editor variable in the .gtdrc file beside the gtd command script. 
+  4. If none of the above provided, use vim or vi if your OS provided them.
+
+Options:
+  -e, --editor=EDITOR  Use the specified editor.
+	EOF
+}
+
+#TODO: test the options choosing the editor
+
+function gtd_edit() {
+	TEMP=`getopt -o e:hv --long editor:,help,verbose \
+	  -n 'gtd.edit' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false; verbose=false; editor=""
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-v|--verbose) verbose=true; shift;;
+		-e|--editor) banana="$2"; shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_edit && return
+	if [ -z "$editor" ]; then
+		if [ -z "$GTD_EDITOR" ]; then
+			cfg=`get_config editor`
+			if [ "$cfg" == "no file" ]; then
+				[ "$verbose" == "true" ] && \
+				  debug "No .gtdrc file found."
+			elif [ "$cfg" == "no key" ]; then
+				[ "$verbose" == "true" ] && \
+				  debug "No key editor in .gtdrc."
+			else
+				editor="$cfg"
+			fi
+		else
+			[ "$verbose" == "true" ] && \
+			  echo "using GTD_EDITOR=$GTD_EDITOR"
+			editor="$GTD_EDITOR"
+		fi
+	fi
+	if [ -z "$editor" ]; then
+		if [ ! -z `command -v vim` ]; then
+			editor=vim
+		elif [ ! -z `command -v vi` ]; then
+			editor=vi
+		else
+			echo "No editor specified, and no vim or vi."
+			echo "Please specify an editor that can be used."
+			usage_edit
+			return
+		fi
+		echo "No editor specified, using $editor."
+	else # editor specified, check it's existence
+		if [ -z `command -v $editor` ]; then # not exist
+			echo "Editor $editor not exist, please try another."
+			return
+		fi
+	fi
+
+	$editor `fs_id2fp $1`
+}
+
+#=== TEST functions in place ===================================================
+function usage_test() {
+	cat<<-EOF
+Usage: gtd test [OPTION]...
+Internal test of gtd functions.
+
+Options:
+  -o, --option=VALUE  Meaning
+	EOF
+}
+
+function gtd_test() {
+	TEMP=`getopt -o t:hv --long task:,help,verbose -n 'gtd.test' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	verbose=false
+	task=""
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-v|--verbose) verbose=true; shift;;
+		-t|--task) task="$2" shift 2;; #TODO:support multi task
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_test && return
+	fn=`fs_id2fn 1006`
+	fs_parse_fn $fn
+}
+#=== SHELL =====================================================================
+function usage_shell() {  #heredoc
+	cat<<-EOF
+Shell-like environment, where you can run gtd commands without typing 'gtd'.
+	EOF
+}
+
+in_shell=false
+function process_command() {
+	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
+
+	case "$1" in  #$1 is command
+	init) echo "init should be run from current shell: '. $0 init'";;
+	a|add) shift; gtd_add "$@";;
+	l|ls|list) shift; gtd_list "$@";;
+	e|edit) shift; gtd_edit "$@";;
+	shell) [ $in_shell == false ] && gtd_shell "$@"\
+	  || echo "We are already in gtd shell.";;
+  	exit) [ $in_shell == true ] && in_shell=false \
+	  || echo "exit is a gtd shell command.";;
+  	help|-h|--help|-\?) usage;;
+	version) echo "0.02 2017-08-24 paulo.dx@gmail.com";;
+	test) shift; gtd_test "$@";;
+	*) echo "Incorrect command: $1"; usage;;
+	esac
+	return 0
+}
+
+function gtd_shell() {
+	shift # bypass 'shell'
+	TEMP=`getopt -o h --long help -n 'gtd.shell' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_shell && return
+
+	in_shell=true
+	while : ; do # infinite loop
+		printf "gtd~ "
+		read args
+		eval set -- "$args"
+		process_command "$@"
+		[ $in_shell == false ] && break
+	done
+}
+#=== MAIN ======================================================================
+if [[ "$0" == *"bash" ]]; then # when run in current shell (". gtd",
+  # I call it exe-in-this-shell), $0 is the path of the bash.
+  # init should run in this mode to keep the variables in current shell.
+	if [ "$1" != "init" ]; then
+		echo "Only command init support running from current shell."
+		return
+	fi
+	# init
+	# BKM to get the dir path of the script file
+	code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	echo "GTD_ROOT=$code_dir"
+	export GTD_ROOT="$code_dir" # files are with the script
+
+	# +PATH to make gtd a command, no need for the 2nd init
+	[[ ! "$PATH" =~ "$code_dir" ]] && export PATH="$PATH:$code_dir"
+
+	alias gtda='gtd a'
+	alias gtdl='gtd l'
+	alias gtde='gtd e'
+	return # exe-in-this-shell can't exit (will exit the shell o/w)
+fi
+# child-shell exe (most common, "./gtd" or "bash gtd")
+[ -z "$GTD_ROOT" ] && echo "No GTD_ROOT specified."\
+  && echo "Please run '. $0 init' first." && exit 0
+
+[ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
+process_command "$@"  #only "$@" can trans things properly, $@/$*/"$*" can't.
+
+#=== Template ==================================================================
+function usage_template() {
+	cat<<-EOF
+Usage: gtd template [OPTION]...
+Description
+
+Options:
+  -o, --option=VALUE  Meaning
+	EOF
+}
+
+function gtd_template() {
+	TEMP=`getopt -o ab:hv --long apple,banana:,help,verbose \
+	  -n 'gtd.template' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	to_help=false; verbose=false
+	apple=false; banana=""
+	while : ; do
+		case "$1" in
+		-h|--help) to_help=true; shift;;
+		-v|--verbose) verbose=true; shift;;
+		-a|--apple) apple=true; shift;;
+		-b|--banana) banana="$2"; shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+	[ $to_help == true ] && usage_template && return
+}
