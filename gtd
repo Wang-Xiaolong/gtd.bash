@@ -133,9 +133,9 @@ Description
 
 function gtd_init() {
 	if [[ "$0" != *"bash" ]]; then # $0 is path of bash indicate
-	  # it runs in current shell (". gtd"),
+	  # it runs in current shell (or source mode, ". gtd"),
 	  # init should run in current shell to keep the vars.
-		echo "init should be run in current shell: '. $0 init'"
+		echo "init should be run in source mode: '. $0 init'"
 		usage_init
 		return
 	fi
