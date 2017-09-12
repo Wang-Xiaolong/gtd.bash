@@ -110,7 +110,18 @@ function fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
 	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
 	esac
 }
-#==- THE LOCAL CONFIG FILE: .gtdrc =============================================
+#==- CONFIG: .gtdrc ============================================================
+function usage_config {
+	cat<<-EOF
+You can write a .gtdrc config file in the directory of this script to store
+you configurations.
+The format is like a ini file:
+# comment
+[section]
+	key = value
+	EOF
+}
+
 function get_config { # $1=key
   # return values:
   # "no arg" when $1 is empty
@@ -353,6 +364,7 @@ function process_command() {
 
 	case "$1" in  #$1 is command
 	init) [ $help_me == true ] && usage_init || gtd_init;;
+	config) usage_config;;
 	a|add) shift; [ $help_me == true ] && usage_add || gtd_add "$@";;
 	l|ls|list) shift; [ $help_me == true ] && usage_list || gtd_list "$@";;
 	e|edit) shift; [ $help_me == true ] && usage_edit || gtd_edit "$@";;
