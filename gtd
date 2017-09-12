@@ -6,7 +6,7 @@ function usage() {  #heredoc
 gtd = Getting Things Done
 Collect and manage your ideas, todos, logs and files.
 Usage:
-  . gtd init
+  . ${BASH_SOURCE[0]} init
   gtd [-h|--help|-?]
   gtd <command> [<args>]
 
@@ -126,7 +126,7 @@ function get_config { # $1=key
 #=== INIT ======================================================================
 function usage_init() {
 	cat<<-EOF
-Usage: . gtd init
+Usage: . ${BASH_SOURCE[0]} init
 Description
 	EOF
 }
