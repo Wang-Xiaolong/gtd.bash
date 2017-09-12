@@ -321,7 +321,14 @@ function gtd_edit() {
 		fi
 	fi
 
-	$editor `fs_id2fp $1`
+	if [ $# -eq 0 ]; then # no arg -- edit this script file
+		fn="${BASH_SOURCE[0]}"
+	else
+		fn=`fs_id2fp $1`
+		[ -z "$fn" ] && echo "ID $1 not found." && return
+	fi
+	echo "Edit $fn ..."
+	$editor "$fn"
 }
 
 #=== TEST functions in place ===================================================
