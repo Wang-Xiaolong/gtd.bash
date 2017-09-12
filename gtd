@@ -400,17 +400,17 @@ if [[ $help_me == false && "$1" != init ]]; then
   # help_me will always be processed (because showing help need nearly nothing)
   # init will always be processed
   # other commands need at least a working dir, and should run in child shell
+	if [[ "$0" == *"bash" ]]; then # source mode: `. gtd` or `source gtd`
+		echo "gtd command should not run in source mode."
+		return # exit in source mode will exit the shell
+	fi
 	if [ -z "$GTD_ROOT" ]; then
 		echo "No working directory specified."
 		echo "Please run '. $0 init' first."
 		#TODO when run in cur shell, $0 is not gtd
 		usage_init
+		exit 0
 	fi
-	if [[ "$0" == *"bash" ]]; then # source mode: `. gtd` or `source gtd`
-		echo "gtd command should not run in source mode."
-		return # exit in source mode will exit the shell
-	fi
-	exit 0
 fi
 
 [ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
