@@ -278,7 +278,7 @@ function gtd_edit() {
 	editor=""
 	while : ; do
 		case "$1" in
-		-e|--editor) banana="$2"; shift 2;;
+		-e|--editor) editor="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
