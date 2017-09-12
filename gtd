@@ -183,7 +183,6 @@ function gtd_add() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $help_me == true ] && usage_add && return
 
 	path=`fs_get_new_fp`
 	if [ ! -z "$message" ]; then
@@ -236,7 +235,7 @@ function gtd_list() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $help_me == true ] && usage_list && return
+
 	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
 		fs_print_fi "$fn" "1n"
 	done
@@ -273,7 +272,7 @@ function gtd_edit() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $help_me == true ] && usage_edit && return
+
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
 			cfg=`get_config editor`
@@ -337,7 +336,7 @@ function gtd_test() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $help_me == true ] && usage_test && return
+
 	fn=`fs_id2fn 1006`
 	fs_parse_fn $fn
 }
@@ -354,16 +353,16 @@ function process_command() {
 
 	case "$1" in  #$1 is command
 	init) [ $help_me == true ] && usage_init || gtd_init;;
-	a|add) shift; gtd_add "$@";;
-	l|ls|list) shift; gtd_list "$@";;
-	e|edit) shift; gtd_edit "$@";;
+	a|add) shift; [ $help_me == true ] && usage_add || gtd_add "$@";;
+	l|ls|list) shift; [ $help_me == true ] && usage_list || gtd_list "$@";;
+	e|edit) shift; [ $help_me == true ] && usage_edit || gtd_edit "$@";;
 	shell) [ $in_shell == false ] && gtd_shell "$@"\
 	  || echo "We are already in gtd shell.";;
   	exit) [ $in_shell == true ] && in_shell=false \
 	  || echo "exit is a gtd shell command.";;
   	help) usage;;
 	version) echo "0.02 2017-08-24 paulo.dx@gmail.com";;
-	test) shift; gtd_test "$@";;
+	test) shift; [ $help_me == true ] && usage_test || gtd_test "$@";;
 	*) echo "Incorrect command: $1"; usage;;
 	esac
 	return 0
@@ -439,5 +438,4 @@ function gtd_template() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-	[ $help_me == true ] && usage_template && return
 }
