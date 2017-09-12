@@ -407,7 +407,6 @@ if [[ $help_me == false && "$1" != init ]]; then
 	if [ -z "$GTD_ROOT" ]; then
 		echo "No working directory specified."
 		echo "Please run '. $0 init' first."
-		#TODO when run in cur shell, $0 is not gtd
 		usage_init
 		exit 0
 	fi
