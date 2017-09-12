@@ -22,6 +22,8 @@ The most commonly used gtd commands are:
 }
 
 function debug() { >&2 echo "$@"; }
+function vecho() { [ $verbose == true ] && echo "$@"; }
+# only "$@" can trans args properly, $@/$*/"$*" can't.
 
 #=== THE FILE SYSTEM ===========================================================
 # Every object in the library is a file.
@@ -120,6 +122,35 @@ function get_config { # $1=key
 	line=`grep "^$1=" "$GTD_ROOT/.gtdrc"`
 	[ -z "$line" ] && echo "no key" && return
 	echo "$line" | cut -d "=" -f 2
+}
+#=== INIT ======================================================================
+function usage_init() {
+	cat<<-EOF
+Usage: . gtd init
+Description
+	EOF
+}
+
+function gtd_init() {
+	if [[ "$0" != *"bash" ]]; then # $0 is path of bash indicate
+	  # it runs in current shell (". gtd"),
+	  # init should run in current shell to keep the vars.
+		echo "init should be run in current shell: '. $0 init'"
+		usage_init
+		return
+	fi
+	# bkm to get the dir path of the script file
+	code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	echo "The working directory: $code_dir"
+	export GTD_ROOT="$code_dir" # files are with the script
+
+	# +PATH to make gtd a command, no need for the 2nd init
+	[[ ! "$PATH" =~ "$code_dir" ]] && export PATH="$PATH:$code_dir"
+
+	#TODO put all alias into config file
+	alias gtda='gtd a'
+	alias gtdl='gtd l'
+	alias gtde='gtd e'
 }
 #=== ADD =======================================================================
 function usage_add() {
@@ -322,9 +353,8 @@ function process_command() {
 	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
 
 	case "$1" in  #$1 is command
-	init) echo "init should be run from current shell: '. $0 init'";;
+	init) [ $help_me == true ] && usage_init || gtd_init;;
 	a|add) shift; gtd_add "$@";;
-	  # only "$@" can trans args properly, $@/$*/"$*" can't.
 	l|ls|list) shift; gtd_list "$@";;
 	e|edit) shift; gtd_edit "$@";;
 	shell) [ $in_shell == false ] && gtd_shell "$@"\
@@ -354,32 +384,6 @@ function gtd_shell() {
 #=== MAIN ======================================================================
 [ $# -eq 0 ] && usage && exit # bkm for no arg check
 
-if [[ "$0" == *"bash" ]]; then # when run in current shell (". gtd",
-  # I call it exe-in-this-shell), $0 is the path of the bash.
-  # init should run in this mode to keep the variables in current shell.
-	if [ "$1" != "init" ]; then
-		echo "Only command init support running from current shell."
-		return
-	fi
-	# init
-	# bkm to get the dir path of the script file
-	code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	echo "GTD_ROOT=$code_dir"
-	export GTD_ROOT="$code_dir" # files are with the script
-
-	# +PATH to make gtd a command, no need for the 2nd init
-	[[ ! "$PATH" =~ "$code_dir" ]] && export PATH="$PATH:$code_dir"
-
-	#TODO put all alias into config file
-	alias gtda='gtd a'
-	alias gtdl='gtd l'
-	alias gtde='gtd e'
-	return # exe-in-this-shell can't exit (will exit the shell o/w)
-fi
-# child-shell exe (most common, "./gtd" or "bash gtd")
-[ -z "$GTD_ROOT" ] && echo "No GTD_ROOT specified."\
-  && echo "Please run '. $0 init' first." && exit 0
-
 # process help & verbose in 1 place
 args=() # empty array
 help_me=false
@@ -391,6 +395,23 @@ for arg in "$@"; do
 	*) args+=("$arg");;
 	esac
 done
+
+if [[ $help_me == false && "$1" != init ]]; then
+  # help_me will always be processed (because showing help need nearly nothing)
+  # init will always be processed
+  # other commands need at least a working dir, and should run in child shell
+	if [ -z "$GTD_ROOT" ]; then
+		echo "No working directory specified."
+		echo "Please run '. $0 init' first."
+		#TODO when run in cur shell, $0 is not gtd
+		usage_init
+	fi
+	if [[ "$0" == *"bash" ]]; then # source mode: `. gtd` or `source gtd`
+		echo "gtd command should not run in source mode."
+		return # exit in source mode will exit the shell
+	fi
+	exit 0
+fi
 
 [ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
 process_command "${args[@]}"
