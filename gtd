@@ -21,9 +21,12 @@ The most commonly used gtd commands are:
 	EOF
 }
 
-function debug() { >&2 echo "$@"; }
+function debug() { [ $debug == true ] && >&2 echo "$@"; }
 function vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
+function string_trim() { # $1=str
+	echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
 
 #=== THE FILE SYSTEM ===========================================================
 # Every object in the library is a file.
@@ -116,10 +119,60 @@ function usage_config {
 You can write a .gtdrc config file in the directory of this script to store
 you configurations.
 The format is like a ini file:
-# comment
+# comment1
+key1 = value1
 [section]
-	key = value
+  key2 = value2
+
+== Command Alias Configuration ==
+"gtd" is not quite smooth when typing on keyboard, maybe "gge" is faster.
+You can write the command alias in .gtdrc, [alias] section.
+And the command alias will be set after you initialized gtd using init command.
+Here is an example:
+[alias]
+  gga = gtd add
+  ggl = gtd list
+  gge = gtd edit
 	EOF
+}
+
+function get_config_section { # $1=section, if no, get global lines
+  # return values:
+  # "no file" when there is no .gtdrc file
+	debug "get_config_section($1)"
+	[ ! -f "$GTD_ROOT/.gtdrc" ] && echo "no file" && return
+	section=""
+	while read -r line || [[ -n "$line" ]]; do
+		if [[ "$line" == \#* ]]; then # comment
+			debug "comment line: $line"
+			continue
+		elif [[ -z "${line// }" ]]; then # empty
+			debug "empty line: $line"
+			continue
+		elif [[ "$line" == \[*\] ]]; then # section
+			debug "section line: $line"
+			section=`echo $line | tr -d []`
+		else
+			debug "ordinary line: $line"
+			if [[ $# -eq 0 ]]; then # no section specified
+				[ -z "$section" ] && echo "$line"
+			elif [ "$section" == "$1" ]; then
+				echo "$line"
+			fi
+		fi
+	done < "$GTD_ROOT/.gtdrc"
+}
+
+function print_config_line { # $1=line, $2=format, %k=key, %v=value
+	debug "print_config_line($1, $2)"
+	IFS='=' read key value <<< "$1" # split line to key & value by =
+	key=`string_trim "$key"` # trim white spaces
+	value=`string_trim "$value"`
+	debug "key: $key, value: $value"
+	key_replaced=${2//%k/$key} # %k->key
+	value_replaced=${key_replaced//%v/$value} # %v->value
+	debug "print_config_line() return: $value_replaced"
+	echo "$value_replaced"
 }
 
 function get_config { # $1=key
@@ -158,10 +211,14 @@ function gtd_init() {
 	# +PATH to make gtd a command, no need for the 2nd init
 	[[ ! "$PATH" =~ "$code_dir" ]] && export PATH="$PATH:$code_dir"
 
-	#TODO put all alias into config file
-	alias gtda='gtd a'
-	alias gtdl='gtd l'
-	alias gtde='gtd e'
+	# alias command from .gtdrc [alias] alias=cmd
+	# alias -p to check the result
+	alias_lines=`get_config_section alias`
+	debug "alias_lines: $alias_lines"
+	while read -r line; do
+		cmd=`print_config_line "$line" "alias %k='%v'"`
+		echo "$cmd" && eval $cmd # eval, bkm to exe a string
+	done <<< "$alias_lines"
 }
 #=== ADD =======================================================================
 function usage_add() {
@@ -402,15 +459,15 @@ function gtd_shell() {
 #=== MAIN ======================================================================
 [ $# -eq 0 ] && usage && exit # bkm for no arg check
 
-# process help & verbose in 1 place
+# process help & verbose & debug in 1 place
 args=() # empty array
-help_me=false
-verbose=false
+help_me=false; verbose=false; debug=false
 for arg in "$@"; do
 	case "$arg" in
 	'-?'|-h|--help) help_me=true;; # ? is a wildcard if not br by ''
-	-v|--verbose) verbose=true;; # no pass help/verbose any longer
-	*) args+=("$arg");;
+	-v|--verbose) verbose=true;;
+	--debug) debug=true;;
+	*) args+=("$arg");; # collect args other than help/verbose/debug
 	esac
 done
 
@@ -421,7 +478,7 @@ if [[ $help_me == false && "$1" != init ]]; then
 	if [[ "$0" == *"bash" ]]; then # source mode: `. gtd` or `source gtd`
 		echo "gtd command should not run in source mode."
 		return # exit in source mode will exit the shell
-	fi
+	fi # common (non-source) mode below
 	if [ -z "$GTD_ROOT" ]; then
 		echo "No working directory specified."
 		echo "Please run '. $0 init' first."
@@ -431,6 +488,7 @@ if [[ $help_me == false && "$1" != init ]]; then
 fi
 
 [ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
+#TODO: give the user some hint to find the package containing the getopt cmd
 process_command "${args[@]}"
 #=== Template ==================================================================
 function usage_template() {
