@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # env here is to use the 1st bash in $PATH -- it's a BKM
 
-function usage() {  #heredoc
+usage() {  #heredoc
 	cat<<-EOF
 gtd = Getting Things Done
 Collect and manage your ideas, todos, logs and files.
@@ -21,12 +21,10 @@ The most commonly used gtd commands are:
 	EOF
 }
 
-function debug() { [ $debug == true ] && >&2 echo "$@"; }
-function vecho() { [ $verbose == true ] && echo "$@"; }
+debug() { [ $debug == true ] && >&2 echo "$@"; }
+vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
-function string_trim() { # $1=str
-	echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
-}
+string_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
 #=== THE FILE SYSTEM ===========================================================
 # Every object in the library is a file.
@@ -44,39 +42,39 @@ function string_trim() { # $1=str
 #   id=1001 or category=home,office,car
 
 GTD_ID_BASE=1000
-function fs_get_max_id() { # no arg; +1 to create new id number
+fs_get_max_id() { # no arg; +1 to create new id number
 	res=`ls "$GTD_ROOT" -R -1 | grep ".id=" | cut -d '.' -f 2 \
 	  | cut -d '=' -f 2 | sort -n | tail -n1`
 	[ -z "$res" ] && echo "$GTD_ID_BASE" || echo "$res"
 }
 
-function fs_get_new_fn() { # fn: file name;
+fs_get_new_fn() { # fn: file name;
 	date=`date +%Y%m%d%H%M%S`
 	id=$(( `fs_get_max_id` + 1 ))
 	echo "$date.id=$id.mt"
 }
 
-function fs_fn2fp() { # fp: file path; $1=fn
+fs_fn2fp() { # fp: file path; $1=fn
 	year=${1:0:4}
 	echo "$GTD_ROOT/$year/$1"
 }
 
-function fs_get_new_fp() {
+fs_get_new_fp() {
 	fn=`fs_get_new_fn`
 	fs_fn2fp "$fn"
 }
 
-function fs_id2fn() { # $1=id
+fs_id2fn() { # $1=id
 	ls -R -r -1 "$GTD_ROOT" | grep ".id=$1."
 }
 
-function fs_id2fp() { # $1=id
+fs_id2fp() { # $1=id
 	fn=`fs_id2fn "$1"`
 	[ -z "$fn" ] && return
 	fs_fn2fp "$fn"
 }
 
-function fs_parse_fn() { # $1=fn; fn->fields
+fs_parse_fn() { # $1=fn; fn->fields
 	IFS='.' read -ra PARTS <<< "$1"
 	for str in "${PARTS[@]}"; do
 		echo $str
@@ -85,7 +83,7 @@ function fs_parse_fn() { # $1=fn; fn->fields
 	echo "${PARTS[-1]}" # type
 }
 
-function fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
+fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
   # 0 -- file info only, 1 line
   # 1 -- file info and 1 content line, 1 or 2 lines
   # 2+ -- file info and 2+ content line
@@ -114,7 +112,7 @@ function fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
 	esac
 }
 #==- CONFIG: .gtdrc ============================================================
-function usage_config {
+usage_config() {
 	cat<<-EOF
 You can write a .gtdrc config file in the directory of this script to store
 you configurations.
@@ -136,7 +134,7 @@ Here is an example:
 	EOF
 }
 
-function get_config_section { # $1=section, if no, get global lines
+get_config_section() { # $1=section, if no, get global lines
   # return values:
   # "no file" when there is no .gtdrc file
 	debug "get_config_section($1)"
@@ -163,7 +161,7 @@ function get_config_section { # $1=section, if no, get global lines
 	done < "$GTD_ROOT/.gtdrc"
 }
 
-function print_config_line { # $1=line, $2=format, %k=key, %v=value
+print_config_line() { # $1=line, $2=format, %k=key, %v=value
 	debug "print_config_line($1, $2)"
 	IFS='=' read key value <<< "$1" # split line to key & value by =
 	key=`string_trim "$key"` # trim white spaces
@@ -175,7 +173,7 @@ function print_config_line { # $1=line, $2=format, %k=key, %v=value
 	echo "$value_replaced"
 }
 
-function get_config { # $1=key
+get_config() { # $1=key
   # return values:
   # "no arg" when $1 is empty
   # "no file" when there is no .gtdrc file;
@@ -188,14 +186,14 @@ function get_config { # $1=key
 	echo "$line" | cut -d "=" -f 2
 }
 #=== INIT ======================================================================
-function usage_init() {
+usage_init() {
 	cat<<-EOF
 Usage: . ${BASH_SOURCE[0]} init
 Description
 	EOF
 }
 
-function gtd_init() {
+gtd_init() {
 	if [[ "$0" != *"bash" ]]; then # $0 is path of bash indicate
 	  # it runs in current shell (or source mode, ". gtd"),
 	  # init should run in current shell to keep the vars.
@@ -221,7 +219,7 @@ function gtd_init() {
 	done <<< "$alias_lines"
 }
 #=== ADD =======================================================================
-function usage_add() {
+usage_add() {
 	cat<<-EOF
 Usage: gtd add [OPTION]...
 
@@ -233,7 +231,7 @@ Usage: gtd add [OPTION]...
 	EOF
 }
 
-function gtd_add() {
+gtd_add() {
 	TEMP=`getopt -o ef:m:t: \
 	  --long edit,file:,message:,template:,time: \
 	  -n 'gtd.add' -- "$@"`
@@ -279,7 +277,7 @@ function gtd_add() {
 	echo "`basename $path` created."
 }
 #=== LIST ======================================================================
-function usage_list() {
+usage_list() {
 	cat<<-EOF
 Usage:
   gtd list [OPTION]...
@@ -289,7 +287,7 @@ Usage:
 	EOF
 }
 
-function gtd_list() {
+gtd_list() {
 	TEMP=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.list' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
@@ -309,7 +307,7 @@ function gtd_list() {
 	done
 }
 #=== Edit =====================================================================
-function usage_edit() {
+usage_edit() {
 	cat<<-EOF
 Usage: gtd edit [OPTION]... <id or alias>
 Edit a file with a specified editor.
@@ -327,7 +325,7 @@ Options:
 
 #TODO: test the options choosing the editor
 
-function gtd_edit() {
+gtd_edit() {
 	TEMP=`getopt -o e: --long editor: \
 	  -n 'gtd.edit' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
@@ -389,7 +387,7 @@ function gtd_edit() {
 }
 
 #=== TEST functions in place ===================================================
-function usage_test() {
+usage_test() {
 	cat<<-EOF
 Usage: gtd test [OPTION]...
 Internal test of gtd functions.
@@ -399,7 +397,7 @@ Options:
 	EOF
 }
 
-function gtd_test() {
+gtd_test() {
 	TEMP=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
@@ -416,14 +414,14 @@ function gtd_test() {
 	fs_parse_fn $fn
 }
 #=== SHELL =====================================================================
-function usage_shell() {  #heredoc
+usage_shell() {  #heredoc
 	cat<<-EOF
 Shell-like environment, where you can run gtd commands without typing 'gtd'.
 	EOF
 }
 
 in_shell=false
-function process_command() {
+process_command() {
 	[ $# -eq 0 ] && usage && return 0  #No arg, show usage
 
 	case "$1" in  #$1 is command
@@ -444,7 +442,7 @@ function process_command() {
 	return 0
 }
 
-function gtd_shell() {
+gtd_shell() {
 	[ $help_me == true ] && usage_shell && return
 
 	in_shell=true
@@ -491,7 +489,7 @@ fi
 #TODO: give the user some hint to find the package containing the getopt cmd
 process_command "${args[@]}"
 #=== Template ==================================================================
-function usage_template() {
+usage_template() {
 	cat<<-EOF
 Usage: gtd template [OPTION]...
 Description
@@ -501,7 +499,7 @@ Options:
 	EOF
 }
 
-function gtd_template() {
+gtd_template() {
 	TEMP=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.template' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
