@@ -43,24 +43,24 @@ str_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
 GTD_ID_BASE=1000
 fs_get_max_id() { # no arg; +1 to create new id number
-	res=`ls "$GTD_ROOT" -R -1 | grep ".id=" | cut -d '.' -f 2 \
+	local res=`ls "$GTD_ROOT" -R -1 | grep ".id=" | cut -d '.' -f 2 \
 	  | cut -d '=' -f 2 | sort -n | tail -n1`
 	[ -z "$res" ] && echo "$GTD_ID_BASE" || echo "$res"
 }
 
 fs_get_new_fn() { # fn: file name;
-	date=`date +%Y%m%d%H%M%S`
-	id=$(( `fs_get_max_id` + 1 ))
+	local date=`date +%Y%m%d%H%M%S`
+	local id=$(( `fs_get_max_id` + 1 ))
 	echo "$date.id=$id.mt"
 }
 
 fs_fn2fp() { # fp: file path; $1=fn
-	year=${1:0:4}
+	local year=${1:0:4}
 	echo "$GTD_ROOT/$year/$1"
 }
 
 fs_get_new_fp() {
-	fn=`fs_get_new_fn`
+	local fn=`fs_get_new_fn`
 	fs_fn2fp "$fn"
 }
 
@@ -69,7 +69,7 @@ fs_id2fn() { # $1=id
 }
 
 fs_id2fp() { # $1=id
-	fn=`fs_id2fn "$1"`
+	local fn=`fs_id2fn "$1"`
 	[ -z "$fn" ] && return
 	fs_fn2fp "$fn"
 }
@@ -89,11 +89,11 @@ fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
   # 2+ -- file info and 2+ content line
   # v -- file info and view all content
 	IFS='.' read -ra PARTS <<< "$1"
-	ct="${PARTS[0]}" # create time
-	cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
-	id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
-	ext="${PARTS[-1]}"
-	fp=`fs_fn2fp $1` # file path
+	local ct="${PARTS[0]}" # create time
+	local cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
+	local id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
+	local ext="${PARTS[-1]}"
+	local fp=`fs_fn2fp $1` # file path
 	if [ "$2" == "1n" ]; then # put 1n here is improve 1n perf
 		[ "$ext" == "mt" ] && \
 		  n1=`head -n1 "$fp" | sed 's/<mt.*>//g'` \
@@ -137,7 +137,7 @@ Here is an example:
 get_config_section() { # $1=section, if no, get global lines
 	debug "get_config_section($1)"
 	[ ! -f "$GTD_ROOT/.gtdrc" ] && debug "no .gtdrc" && return
-	section=""
+	local section=""
 	while read -r line || [[ -n "$line" ]]; do
 		if [[ "$line" == \#* ]]; then # comment
 			debug "comment line: $line"
@@ -174,7 +174,8 @@ print_config_line() { # $1=line, $2=format, %k=key, %v=value
 get_config() { # $1=key, $2=section, optional
 	debug "get_config($@)"
 	[ ! -f "$GTD_ROOT/.gtdrc" ] && debug "no .gtdrc" && return
-	line=`get_config_section $2 | grep -e "^[[:space:]]*$1[[:space:]]*="`
+	local line=`get_config_section $2 \
+	  | grep -e "^[[:space:]]*$1[[:space:]]*="`
 	[ -z "$line" ] && return
 	print_config_line "$line" "%v"
 }
@@ -236,7 +237,8 @@ gtd_add() {
 	  -n 'gtd.add' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	path=""; message=""; template=""; time=""; editor="";
+	local path=""; local message=""; local template=""
+	local time=""; local editor=""
 	while : ; do
 		case "$1" in
 		-e|--editor) editor="$2"; shift 2;;
@@ -268,7 +270,7 @@ gtd_add() {
 
 	echo "Any stuff, please (ctrl-d to end, ctrl-c to cancel):"
 	[ $in_shell == true ] && trap "echo; return" INT
-	input=`cat` # save keyin until eof
+	local input=`cat` # save keyin until eof
 	if [ -z `echo $input | tr -d '[:space:]'` ]; then # empty check
 		echo "Nothing!"
 		return
@@ -361,7 +363,7 @@ gtd_edit() {
 	  -n 'gtd.edit' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	editor=""
+	local editor=""
 	while : ; do
 		case "$1" in
 		-e|--editor) editor="$2"
@@ -400,7 +402,7 @@ gtd_test() {
 	TEMP=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	task=""
+	local task=""
 	while : ; do
 		case "$1" in
 		-t|--task) task="$2" shift 2;; #TODO:support multi task
@@ -503,7 +505,7 @@ gtd_template() {
 	  -n 'gtd.template' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	apple=false; banana=""
+	local apple=false; local banana=""
 	while : ; do
 		case "$1" in
 		-a|--apple) apple=true; shift;;
