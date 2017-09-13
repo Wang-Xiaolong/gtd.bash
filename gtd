@@ -224,7 +224,7 @@ Usage: gtd add [OPTION]...
 
   -f, --file=PATH
   -m, --message=MESSAGE
-  -e, --edit
+  -e, --editor=EDITOR
       --template=TEMPLATE
   -t, --time=TIME
 	EOF
@@ -232,14 +232,14 @@ Usage: gtd add [OPTION]...
 
 gtd_add() {
 	TEMP=`getopt -o ef:m:t: \
-	  --long edit,file:,message:,template:,time: \
+	  --long editor:,file:,message:,template:,time: \
 	  -n 'gtd.add' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	path=""; message=""; template=""; time=""; edit=false;
+	path=""; message=""; template=""; time=""; editor="";
 	while : ; do
 		case "$1" in
-		-e|--edit) edit=true; shift;;
+		-e|--editor) editor="$2"; shift 2;;
 		-f|--file) path="$2"; shift 2;;
 		-m|--message) message="$2"; shift 2;;
 		--template) template="$2"; shift 2;;
@@ -257,10 +257,12 @@ gtd_add() {
 		return
 	fi
 
-	if [ $edit == true ]; then
-		[ -z $GIT_EDITOR ] && echo "GIT_EDITOR not specified." && return
+	if [ $verbose == true ]; then # verbose -- open with an editor
+		select_editor
+		[ -z "$editor" ] && return
 		install -D /dev/null "$path"
-		$GIT_EDITOR "$path"
+		echo "Edit $path ..."
+		$editor "$path"
 		return
 	fi
 
@@ -323,23 +325,7 @@ Options:
 }
 
 #TODO: test the options choosing the editor
-
-gtd_edit() {
-	TEMP=`getopt -o e: --long editor: \
-	  -n 'gtd.edit' -- "$@"`
-	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
-	editor=""
-	while : ; do
-		case "$1" in
-		-e|--editor) editor="$2"
-			vecho "Editor $editor specified from command line."
-			shift 2;;
-		--) shift; break;;
-		*) echo "Unknown option: $1"; return;;
-		esac
-	done
-
+select_editor() { # need $editor in the caller and will manipulate
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
 			editor=`get_config editor`
@@ -368,6 +354,26 @@ gtd_edit() {
 			return
 		fi
 	fi
+}
+
+gtd_edit() {
+	TEMP=`getopt -o e: --long editor: \
+	  -n 'gtd.edit' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	editor=""
+	while : ; do
+		case "$1" in
+		-e|--editor) editor="$2"
+			vecho "Editor $editor specified from command line."
+			shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
+
+	select_editor
+	[ -z "$editor" ] && return
 
 	if [ $# -eq 0 ]; then # no arg -- edit this script file
 		fn="${BASH_SOURCE[0]}"
