@@ -24,7 +24,7 @@ The most commonly used gtd commands are:
 debug() { [ $debug == true ] && >&2 echo "$@"; }
 vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
-string_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+str_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
 #=== THE FILE SYSTEM ===========================================================
 # Every object in the library is a file.
@@ -164,8 +164,8 @@ get_config_section() { # $1=section, if no, get global lines
 print_config_line() { # $1=line, $2=format, %k=key, %v=value
 	debug "print_config_line($1, $2)"
 	IFS='=' read key value <<< "$1" # split line to key & value by =
-	key=`string_trim "$key"` # trim white spaces
-	value=`string_trim "$value"`
+	key=`str_trim "$key"` # trim white spaces
+	value=`str_trim "$value"`
 	debug "key: $key, value: $value"
 	key_replaced=${2//%k/$key} # %k->key
 	value_replaced=${key_replaced//%v/$value} # %v->value
