@@ -135,10 +135,8 @@ Here is an example:
 }
 
 get_config_section() { # $1=section, if no, get global lines
-  # return values:
-  # "no file" when there is no .gtdrc file
 	debug "get_config_section($1)"
-	[ ! -f "$GTD_ROOT/.gtdrc" ] && echo "no file" && return
+	[ ! -f "$GTD_ROOT/.gtdrc" ] && debug "no .gtdrc" && return
 	section=""
 	while read -r line || [[ -n "$line" ]]; do
 		if [[ "$line" == \#* ]]; then # comment
@@ -173,17 +171,12 @@ print_config_line() { # $1=line, $2=format, %k=key, %v=value
 	echo "$value_replaced"
 }
 
-get_config() { # $1=key
-  # return values:
-  # "no arg" when $1 is empty
-  # "no file" when there is no .gtdrc file;
-  # "no key" when there is no key as $1 specified;
-  # value of key, when the key line was found
-	[ -z "$1" ] && echo "no arg" && return
-	[ ! -f "$GTD_ROOT/.gtdrc" ] && echo "no file" && return
-	line=`grep "^$1=" "$GTD_ROOT/.gtdrc"`
-	[ -z "$line" ] && echo "no key" && return
-	echo "$line" | cut -d "=" -f 2
+get_config() { # $1=key, $2=section, optional
+	debug "get_config($@)"
+	[ ! -f "$GTD_ROOT/.gtdrc" ] && debug "no .gtdrc" && return
+	line=`get_config_section $2 | grep -e "^[[:space:]]*$1[[:space:]]*="`
+	[ -z "$line" ] && return
+	print_config_line "$line" "%v"
 }
 #=== INIT ======================================================================
 usage_init() {
@@ -333,7 +326,9 @@ gtd_edit() {
 	editor=""
 	while : ; do
 		case "$1" in
-		-e|--editor) editor="$2"; shift 2;;
+		-e|--editor) editor="$2"
+			vecho "Editor $editor specified from command line."
+			shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
@@ -341,20 +336,12 @@ gtd_edit() {
 
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
-			cfg=`get_config editor`
-			if [ "$cfg" == "no file" ]; then
-				[ "$verbose" == "true" ] && \
-				  debug "No .gtdrc file found."
-			elif [ "$cfg" == "no key" ]; then
-				[ "$verbose" == "true" ] && \
-				  debug "No key editor in .gtdrc."
-			else
-				editor="$cfg"
-			fi
+			editor=`get_config editor`
+			[ ! -z editor ] && \
+			  vecho "Editor $editor specified from .gtdrc."
 		else
-			[ "$verbose" == "true" ] && \
-			  echo "using GTD_EDITOR=$GTD_EDITOR"
 			editor="$GTD_EDITOR"
+			vecho "Editor $editor specified from GTD_EDITOR."
 		fi
 	fi
 	if [ -z "$editor" ]; then
