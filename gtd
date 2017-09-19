@@ -254,6 +254,7 @@ gtd_add() {
 	path=`fs_get_new_fp`
 	if [ ! -z "$message" ]; then
 		install -D /dev/null "$path"
+		# 'install' can make the dirs on the way to the file
 		echo "$message" > "$path"
 		echo "`basename $path` created."
 		return
