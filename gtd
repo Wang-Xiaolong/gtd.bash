@@ -21,10 +21,61 @@ The most commonly used gtd commands are:
 	EOF
 }
 
+#=== PUBLIC FUNCTIONS ==========================================================
 debug() { [ $debug == true ] && >&2 echo "$@"; }
 vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
 str_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+
+#=== FILE ======================================================================
+# fn: file name
+# fx: file attributs
+#   ftime
+#   fid
+#   falias
+#   fparent
+#   fdep
+#   fname
+#   ftype
+#   fattr[]
+fn2fx() { # $1=fn; output: ftime, fid, ftype, fattr[]
+	debug "fn2fx($1)"
+	local PARTS, part
+	IFS='.' read -ra PARTS <<< "$1"
+	ftime=${PARTS[0]}; debug "ftime=$ftime"
+	fid=${PARTS[1]:3}; debug "fid=$fid" # :3 to bypass id=
+	ftype=${PARTS[-1]}; debug "ftype=$ftype"
+	local attr_cnt=${#PARTS[@]}
+	if [ $attr_cnt -le 3 ]; then
+		debug "attr_cnt=$attr_cnt, no additional attributes."
+		return
+	fi
+	attr_cnt=$attr_cnt-3
+	for part in "${PARTS[@]:2:$attr_cnt}"; do # get all other fields
+		fattr+=("$part")
+	done
+	debug "fattr: ${fattr[@]}"
+}
+
+fx2fn() { # input: ftime, fid, ftype, fattr[]; output: echo fn
+	local fn="$ftime.id=$fid"
+	for attr in "${fattr[@]}"; do
+		fn="$fn.$attr"
+	done
+	fn="$fn.$ftype"
+	echo "$fn"
+}
+
+#debug=true
+#ftime=fid=ftype=""
+#fattr=()
+#fn2fx "11.id=12.pr=13.dep=14.name=hello.marktree"
+#fx2fn
+#exit
+
+fx2fx() { # $1="set string"
+	return
+}
 
 #=== THE FILE SYSTEM ===========================================================
 # Every object in the library is a file.
@@ -101,9 +152,7 @@ fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
 		echo "[$cts] $id: $n1"
 		return
 	fi
-#	for field in "${PARTS[@]}"; do # get all other fields
-#		echo $str
-#	done
+
 	case "$2" in
 	2n) echo ;;
 	8n) echo ;;
@@ -202,7 +251,7 @@ gtd_init() {
 		return
 	fi
 	# bkm to get the dir path of the script file
-	code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+	local code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 	echo "The working directory: $code_dir"
 	export GTD_ROOT="$code_dir" # files are with the script
 
@@ -214,7 +263,7 @@ gtd_init() {
 	alias_lines=`get_config_section alias`
 	debug "alias_lines: $alias_lines"
 	while read -r line; do
-		cmd=`print_config_line "$line" "alias %k='%v'"`
+		local cmd=`print_config_line "$line" "alias %k='%v'"`
 		echo "$cmd" && eval $cmd # eval, bkm to exe a string
 	done <<< "$alias_lines"
 }
@@ -279,6 +328,33 @@ gtd_add() {
 	install -D /dev/null "$path"
 	echo "$input" > "$path"
 	echo "`basename $path` created."
+}
+#=== MOVE ======================================================================
+usage_move() {
+	cat<<-EOF
+Usage: gtd move [OPTION]... SOURCE... DEST
+   or: gtd move -t DESTIN SOURCE...
+Move all files specified by SOURCE under the file of DEST.
+
+Options:
+  -t, --target=DEST  Move all SOURCE files under DEST
+	EOF
+}
+
+gtd_move() {
+	TEMP=`getopt -o ab: --long apple,banana: \
+	  -n 'gtd.move' -- "$@"`
+	[ $? != 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$TEMP"
+	local apple=false; local banana=""
+	while : ; do
+		case "$1" in
+		-a|--apple) apple=true; shift;;
+		-b|--banana) banana="$2"; shift 2;;
+		--) shift; break;;
+		*) echo "Unknown option: $1"; return;;
+		esac
+	done
 }
 #=== LIST ======================================================================
 usage_list() {
@@ -430,8 +506,9 @@ process_command() {
 	init) [ $help_me == true ] && usage_init || gtd_init;;
 	config) [ $help_me == true ] && usage_config || vim "$GTD_ROOT/.gtdrc";;
 	a|add) shift; [ $help_me == true ] && usage_add || gtd_add "$@";;
+	m|mv|move) shift; [ $help_me == true ] && usage_move || gtd_move "$@";;
 	l|ls|list) shift; [ $help_me == true ] && usage_list || gtd_list "$@";;
-	e|edit) shift; [ $help_me == true ] && usage_edit || gtd_edit "$@";;
+	e|ed|edit) shift; [ $help_me == true ] && usage_edit || gtd_edit "$@";;
 	shell) [ $in_shell == false ] && gtd_shell "$@"\
 	  || echo "We are already in gtd shell.";;
   	exit) [ $in_shell == true ] && in_shell=false \
@@ -494,6 +571,7 @@ process_command "${args[@]}"
 usage_template() {
 	cat<<-EOF
 Usage: gtd template [OPTION]...
+   or: gtd template [OPTION]...
 Description
 
 Options:
