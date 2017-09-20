@@ -341,19 +341,56 @@ Options:
 	EOF
 }
 
+fid2path() { # $1=id|alias; echo out path
+	[[ $1 =~ ^[0-9]+$ ]] && find "$GTD_ROOT" -name "*.id=$1.*" \
+	  || find "$GTD_ROOT" -name ".alias=$1."
+}
+fn2id() { # $1=fn; echo out id
+	echo "$1" | cut -d '.' -f 2 | cut -d '=' -f 2
+}
+
 gtd_move() {
-	TEMP=`getopt -o ab: --long apple,banana: \
+	local TEMP=`getopt -o t: --long target: \
 	  -n 'gtd.move' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
-	local apple=false; local banana=""
+	local target=""
+	local source=()
 	while : ; do
 		case "$1" in
-		-a|--apple) apple=true; shift;;
-		-b|--banana) banana="$2"; shift 2;;
-		--) shift; break;;
+		-t|--target) target="$2"; shift 2;;
+		--) shift; break;; # after -- are non option args
 		*) echo "Unknown option: $1"; return;;
 		esac
+	done
+	if [ -z "$target" ]; then # no -t, source... target
+		if [ $# -lt 2 ]; then
+			echo "Source or target id/alias not specified."
+			return
+		fi
+		target="${@:${#}}"
+		source=( "${@:1:${#}-1}" )
+	else # -t option->target, $@ all source
+		if [ $# -eq 0 ]; then
+			echo "Source id/alias not specified."
+		fi
+		source=( "$@" )
+	fi
+	debug "target=$target"
+	debug "source=${source[@]}"
+	local target_path=`fid2path "$target"`
+	[ -z "$target_path" ] && echo "No target $target found." && return
+	debug "target_path=$target_path"
+	local target_dir=`dirname "$target_path"`
+	local target_name=`basename "$target_path"`
+	local target_id=`fn2id $target_name`
+	local dest_dir="$target_dir/$target_id"
+	for src in "${source[@]}"; do
+		local src_path=`fid2path "$src"`
+		[ -z "$src_path" ] && echo "No source $src found." && continue
+		debug "src_path=$src_path"
+		[ ! -d "$dest_dir" ] && mkdir "$dest_dir"
+		mv "$src_path" "$dest_dir"
 	done
 }
 #=== LIST ======================================================================
@@ -580,7 +617,7 @@ Options:
 }
 
 gtd_template() {
-	TEMP=`getopt -o ab: --long apple,banana: \
+	local TEMP=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.template' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
