@@ -345,8 +345,20 @@ fid2path() { # $1=id|alias; echo out path
 	[[ $1 =~ ^[0-9]+$ ]] && find "$GTD_ROOT" -name "*.id=$1.*" \
 	  || find "$GTD_ROOT" -name ".alias=$1."
 }
+
 fn2id() { # $1=fn; echo out id
 	echo "$1" | cut -d '.' -f 2 | cut -d '=' -f 2
+}
+
+gtd_move_1file() { # $1=src id|alias; input: $dest_dir
+	local src_path=`fid2path "$1"`
+	[ -z "$src_path" ] && echo "No source $src found." && continue
+	debug "src_path=$src_path"
+	local src_dir=`dirname "$src_path"`
+	local src_name=`basename "$src_path"`
+	local src_id=`fn2id "$src_name"`
+	[ ! -d "$dest_dir" ] && mkdir "$dest_dir"
+	mv "$src_path" "$dest_dir"
 }
 
 gtd_move() {
@@ -378,6 +390,10 @@ gtd_move() {
 	fi
 	debug "target=$target"
 	debug "source=${source[@]}"
+	# TODO: if target is under source, no move
+	# TODO: if target==source, no move
+	# TODO: if already in, no move
+	# TODO: target is 0, move to root
 	local target_path=`fid2path "$target"`
 	[ -z "$target_path" ] && echo "No target $target found." && return
 	debug "target_path=$target_path"
@@ -386,11 +402,7 @@ gtd_move() {
 	local target_id=`fn2id $target_name`
 	local dest_dir="$target_dir/$target_id"
 	for src in "${source[@]}"; do
-		local src_path=`fid2path "$src"`
-		[ -z "$src_path" ] && echo "No source $src found." && continue
-		debug "src_path=$src_path"
-		[ ! -d "$dest_dir" ] && mkdir "$dest_dir"
-		mv "$src_path" "$dest_dir"
+		gtd_move_1file "$src"
 	done
 }
 #=== LIST ======================================================================
