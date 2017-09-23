@@ -242,6 +242,19 @@ Command alias will also be registerred if they are written in the .gtdrc
 	EOF
 }
 
+gtd_ps1() {
+	local find_res=`find "$GTD_ROOT" -type d -wholename "$PWD"`
+	if [ ! -z $find_res ]; then # PWD is within GTD_ROOT
+		if [ "$GTD_ROOT" == "$PWD" ]; then
+			echo "GTD$ "
+		else	
+			echo "GTD:${PWD#$GTD_ROOT/}$ " # relative path
+		fi
+	else # PWD is outside GTD_ROOT
+		echo "$PWD$ "
+	fi
+}
+
 gtd_init() {
 	if [[ "$0" != *"bash" ]]; then # $0 is path of bash indicate
 	  # it runs in current shell (or source mode, ". gtd"),
@@ -266,6 +279,8 @@ gtd_init() {
 		local cmd=`print_config_line "$line" "alias %k='%v'"`
 		echo "$cmd" && eval $cmd # eval, bkm to exe a string
 	done <<< "$alias_lines"
+
+	PS1="\e[0;32m\$(gtd ps1)\e[m" # Green prompt
 }
 #=== ADD =======================================================================
 usage_add() {
@@ -553,6 +568,7 @@ process_command() {
 
 	case "$1" in  #$1 is command
 	init) [ $help_me == true ] && usage_init || gtd_init;;
+	ps1) gtd_ps1;;
 	config) [ $help_me == true ] && usage_config || vim "$GTD_ROOT/.gtdrc";;
 	a|add) shift; [ $help_me == true ] && usage_add || gtd_add "$@";;
 	m|mv|move) shift; [ $help_me == true ] && usage_move || gtd_move "$@";;
