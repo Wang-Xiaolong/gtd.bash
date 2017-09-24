@@ -273,7 +273,7 @@ gtd_init() {
 
 	# alias command from .gtdrc [alias] alias=cmd
 	# alias -p to check the result
-	alias_lines=`get_config_section alias`
+	local alias_lines=`get_config_section alias`
 	debug "alias_lines: $alias_lines"
 	while read -r line; do
 		local cmd=`print_config_line "$line" "alias %k='%v'"`
