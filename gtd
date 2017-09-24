@@ -265,7 +265,7 @@ gtd_init() {
 	fi
 	# bkm to get the dir path of the script file
 	local code_dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	echo "The working directory: $code_dir"
+	echo "GTD working directory: $code_dir"
 	export GTD_ROOT="$code_dir" # files are with the script
 
 	# +PATH to make gtd a command, no need for the 2nd init
@@ -281,6 +281,13 @@ gtd_init() {
 	done <<< "$alias_lines"
 
 	PS1="\e[0;32m\$(gtd ps1)\e[m" # Green prompt
+
+	local short_gtd_root=`get_config short_gtd_root`
+	if [ ! -z "$short_gtd_root" ]; then
+		export $short_gtd_root="$GTD_ROOT"
+		echo "You can use \$$short_gtd_root"\
+		  "to refer GTD working directory."
+	fi
 }
 #=== ADD =======================================================================
 usage_add() {
