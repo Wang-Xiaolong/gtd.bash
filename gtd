@@ -12,9 +12,11 @@ Usage:
 
 The most commonly used gtd commands are:
   init		Make the gtd command available.
+  cd|chdir	Change the working directory.
   add		Add a new file to the library.
-  remove	Remove files from the library.
-  list		List files in the library.
+  md|mkdir	Add a new directory to the library.
+  rm|remove	Remove files from the library.
+  ls|list	List files in the library.
   view		View a file in the library.
   edit		Edit a file in the library.
   set		Set the attributes of a file in the library.
