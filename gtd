@@ -577,6 +577,16 @@ select_editor() { # need $editor in the caller and will manipulate
 	fi
 }
 
+path_id_alias_to_fp() { # $1=path|id|alias
+	if [ -d "$1" ]; then
+		echo "$(ls -a $1/.id=*)"	
+	elif [[ $1 =~ ^[0-9]+$ ]]; then
+		find "$GTD_ROOT" -type f -name "*.id=$1.*"
+	else
+		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
+	fi
+}
+
 gtd_edit() {
 	PARAMS=`getopt -o e: --long editor: \
 	  -n 'gtd.edit' -- "$@"`
@@ -600,7 +610,7 @@ gtd_edit() {
 	if [ $# -eq 0 ]; then # no arg -- edit this script file
 		fn="${BASH_SOURCE[0]}"
 	else
-		fn=`fs_id2fp $1`
+		fn=`path_id_alias_to_fp $1`
 		[ -z "$fn" ] && echo "ID $1 not found." && return
 	fi
 	echo "Edit $fn ..."
