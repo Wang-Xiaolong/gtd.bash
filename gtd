@@ -308,20 +308,23 @@ Options:
 }
 
 gtd_mkdir() {
-	local TEMP=`getopt -o ab: --long apple,banana: \
+	local TEMP=`getopt -o a: --long alias: \
 	  -n 'gtd.mkdir' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$TEMP"
 	debug "gtd_mkdir($@)"
-	local apple=false; local banana=""
+	local alias=""
 	while : ; do
 		case "$1" in
-		-a|--apple) apple=true; shift;;
-		-b|--banana) banana="$2"; shift 2;;
+		-a|--alias) alias="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
+
+	[[ -n "$alias" && $# -gt 1 ]] \
+	  && echo "Can't create multiple directories with the same alias." \
+	  && return
 }
 #=== ADD =======================================================================
 usage_add() {
