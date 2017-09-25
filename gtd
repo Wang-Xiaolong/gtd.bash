@@ -298,12 +298,14 @@ Usage: gtd mkdir [OPTION]... DIRECTORY...
 Create the DIRECTORY(ies), if they do not already exist.
 
 Options:
-  -a, --alias=ALIAS	create with alias as ALIAS,
-                   	used when creating only 1 directory.
-  -t, --type=TYPE	create with type as TYPE
+  -a, --alias=ALIAS     create with alias as ALIAS,
+                        used when creating only 1 directory.
+  -t, --type=TYPE       create with type as TYPE
   -n, --name=NAME       create with long name as NAME
-  -s, --set=SETTING	create with special SETTING.
-  -e, --editor=EDITOR	open with EDITOR to modify long name and detail.
+  -s, --set=SETTING     create with special SETTING.
+  -e, --editor=EDITOR   open with EDITOR to modify long name and detail.
+  -v, --verbose         open with EDITOR or system editor
+                        to modify long name and detail.
 	EOF
 }
 
@@ -325,26 +327,34 @@ gen_new_dir_fn() {
 }
 
 gtd_mkdir() {
-	PARAMS="$(getopt -o a:t:n:s: --long alias:type:name:set: \
+	PARAMS="$(getopt -o a:t:n:s:e: --long alias:type:name:set:editor: \
 	  -n 'gtd.mkdir' -- "$@")"
 	[ $? -ne 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$PARAMS"
 	debug "gtd_mkdir($@)"
 	local alias=""; local type=""; local name=""; local setting=()
+	local editor=""
 	while : ; do
 		case "$1" in
 		-a|--alias) alias="$2"; shift 2;;
 		-t|--type) type="$2"; shift 2;;
 		-n|--name) name="$2"; shift 2;;
 		-s|--set) setting+=("$2"); shift 2;;
+		-e|--editor) editor="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
 
-	[[ -n "$alias" && $# -gt 1 ]] \
-	  && echo "Can't create multiple directories with the same alias." \
-	  && return
+	if [ $# -gt 1 ]; then
+		[ -n "$alias" ] && \
+		echo "Can't create multiple directories with the same alias." \
+		&& return
+
+		[[ -n "$editor" || $verbose == true ]] && \
+		echo "Can't edit multiple directories at the same time." \
+		&& return
+	fi
 
 	for dir in "$@"; do
 		mkdir $dir
@@ -362,6 +372,13 @@ gtd_mkdir() {
 		# dir is a GTD directory, create the info file
 		local fn=$(gen_new_dir_fn)
 		echo "$name" > "$dir/$fn"
+
+		if [[ -n "$editor" || $verbose == true ]]; then
+			select_editor
+			[ -z "$editor" ] && \
+			  echo "No available editor." && return
+			$editor "$dir/$fn"
+		fi
 	done
 }
 #=== ADD =======================================================================
