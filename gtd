@@ -569,7 +569,6 @@ Options:
 	EOF
 }
 
-#TODO: test the options choosing the editor
 select_editor() { # need $editor in the caller and will manipulate
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
