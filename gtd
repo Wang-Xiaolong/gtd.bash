@@ -302,8 +302,8 @@ Options:
                    	used when creating only 1 directory.
   -t, --type=TYPE	create with type as TYPE
   -n, --name=NAME       create with long name as NAME
-  -v, --verbose		open an editor to edit the long name and detail.
   -s, --set=SETTING	create with special SETTING.
+  -e, --editor=EDITOR	open with EDITOR to modify long name and detail.
 	EOF
 }
 
@@ -361,7 +361,7 @@ gtd_mkdir() {
 		fi
 		# dir is a GTD directory, create the info file
 		local fn=$(gen_new_dir_fn)
-		touch "$dir/$fn"
+		echo "$name" > "$dir/$fn"
 	done
 }
 #=== ADD =======================================================================
