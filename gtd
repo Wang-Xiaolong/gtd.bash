@@ -248,12 +248,12 @@ gtd_ps1() {
 	local find_res=`find "$GTD_ROOT" -type d -wholename "$PWD"`
 	if [ -n $find_res ]; then # PWD is within GTD_ROOT
 		if [ "$GTD_ROOT" == "$PWD" ]; then
-			echo "GTD$ "
+			echo "GTD"
 		else	
-			echo "GTD:${PWD#$GTD_ROOT/}$ " # relative path
+			echo "GTD:${PWD#$GTD_ROOT/}" # relative path
 		fi
 	else # PWD is outside GTD_ROOT
-		echo "$PWD$ "
+		echo "$PWD"
 	fi
 }
 
@@ -282,7 +282,7 @@ gtd_init() {
 		echo "$cmd" && eval $cmd # eval, bkm to exe a string
 	done <<< "$alias_lines"
 
-	PS1="\e[0;32m\$(gtd ps1)\e[m" # Green prompt
+	PS1="\e[0;32m\$(gtd ps1)\e[m \$ " # Green prompt
 
 	local short_gtd_root=`get_config short_gtd_root`
 	if [ -n "$short_gtd_root" ]; then
