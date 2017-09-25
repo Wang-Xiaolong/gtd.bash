@@ -307,16 +307,23 @@ Options:
 	EOF
 }
 
+gen_dir_fn() {
+	debug "gen_dir_fn(ali=$alias, typ=$type, nm=$name, set=${setting[@]})"
+}
+
 gtd_mkdir() {
-	local TEMP=`getopt -o a: --long alias: \
-	  -n 'gtd.mkdir' -- "$@"`
-	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	PARAMS="$(getopt -o a:t:n:s: --long alias:type:name:set: \
+	  -n 'gtd.mkdir' -- "$@")"
+	[ $? -ne 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$PARAMS"
 	debug "gtd_mkdir($@)"
-	local alias=""
+	local alias=""; local type=""; local name=""; local setting=()
 	while : ; do
 		case "$1" in
 		-a|--alias) alias="$2"; shift 2;;
+		-t|--type) type="$2"; shift 2;;
+		-n|--name) name="$2"; shift 2;;
+		-s|--set) setting+=("$2"); shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
@@ -325,6 +332,16 @@ gtd_mkdir() {
 	[[ -n "$alias" && $# -gt 1 ]] \
 	  && echo "Can't create multiple directories with the same alias." \
 	  && return
+
+	for dir in "$@"; do
+		mkdir $dir
+		if [ $? -ne 0 ]; then
+			echo "Fail creating $dir."
+			continue
+		fi
+		# dir created
+		gen_dir_fn
+	done
 }
 #=== ADD =======================================================================
 usage_add() {
