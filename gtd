@@ -357,11 +357,11 @@ Usage: gtd add [OPTION]...
 }
 
 gtd_add() {
-	TEMP=`getopt -o ef:m:t: \
+	PARAMS=`getopt -o ef:m:t: \
 	  --long editor:,file:,message:,template:,time: \
 	  -n 'gtd.add' -- "$@"`
-	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	[ $? -ne 0 ] && echo "Failed parsing the arguments." && return
+	eval set -- "$PARAMS"
 	debug "gtd_add($@)"
 	local path=""; local message=""; local template=""
 	local time=""; local editor=""
@@ -439,10 +439,10 @@ gtd_move_1file() { # $1=src id|alias; input: $dest_dir
 }
 
 gtd_move() {
-	local TEMP=`getopt -o t: --long target: \
+	PARAMS=`getopt -o t: --long target: \
 	  -n 'gtd.move' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	eval set -- "$PARAMS"
 	debug "gtd_move($@)"
 	local target=""
 	local source=()
@@ -495,10 +495,10 @@ Usage:
 }
 
 gtd_list() {
-	TEMP=`getopt -o ab: --long apple,banana: \
+	PARAMS=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.list' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	eval set -- "$PARAMS"
 	debug "gtd_list($@)"
 	apple=false; banana=""
 	while : ; do
@@ -564,10 +564,10 @@ select_editor() { # need $editor in the caller and will manipulate
 }
 
 gtd_edit() {
-	TEMP=`getopt -o e: --long editor: \
+	PARAMS=`getopt -o e: --long editor: \
 	  -n 'gtd.edit' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	eval set -- "$PARAMS"
 	debug "gtd_edit($@)"
 	local editor=""
 	while : ; do
@@ -605,9 +605,9 @@ Options:
 }
 
 gtd_test() {
-	TEMP=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
+	PARAMS=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	eval set -- "$PARAMS"
 	debug "gtd_test($@)"
 	local task=""
 	while : ; do
@@ -712,10 +712,10 @@ Options:
 }
 
 gtd_template() {
-	local TEMP=`getopt -o ab: --long apple,banana: \
+	PARAMS=`getopt -o ab: --long apple,banana: \
 	  -n 'gtd.template' -- "$@"`
 	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$TEMP"
+	eval set -- "$PARAMS"
 	debug "gtd_template($@)"
 	local apple=false; local banana=""
 	while : ; do
