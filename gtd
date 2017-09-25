@@ -353,6 +353,13 @@ gtd_mkdir() {
 			continue
 		fi
 		# dir created
+		local abs_path="$(cd $dir && pwd)"
+		local find_res=`find "$GTD_ROOT" -type d -wholename "$abs_path"`
+		if [ -z "$find_res" ]; then # dir is not within GTD_ROOT
+			vecho "$abs_path is not a GTD directory."
+			return
+		fi
+		# dir is a GTD directory, create the info file
 		local fn=$(gen_new_dir_fn)
 		touch "$dir/$fn"
 	done
