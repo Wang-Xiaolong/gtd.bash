@@ -307,8 +307,21 @@ Options:
 	EOF
 }
 
-gen_dir_fn() {
+get_max_dir_id() {
+	debug "get_max_dir_id()"
+	local max_id=0
+	for fp in "$(find "$GTD_ROOT" -type f -name ".id=*")"; do
+		[ -z "$fp" ] && continue
+		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
+		[ "$id" -gt "$max_id" ] && max_id=$id
+	done
+	echo $max_id
+}
+
+gen_new_dir_fn() {
 	debug "gen_dir_fn(ali=$alias, typ=$type, nm=$name, set=${setting[@]})"
+	local id=$(( `get_max_dir_id`+ 1 ))
+	echo ".id=$id.marktree"
 }
 
 gtd_mkdir() {
@@ -340,7 +353,8 @@ gtd_mkdir() {
 			continue
 		fi
 		# dir created
-		gen_dir_fn
+		local fn=$(gen_new_dir_fn)
+		touch "$dir/$fn"
 	done
 }
 #=== ADD =======================================================================
