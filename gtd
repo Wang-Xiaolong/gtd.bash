@@ -294,12 +294,16 @@ gtd_init() {
 #=== Mkdir =====================================================================
 usage_mkdir() {
 	cat<<-EOF
-Usage: gtd mkdir [OPTION]...
-   or: gtd mkdir [OPTION]...
-Description
+Usage: gtd mkdir [OPTION]... DIRECTORY...
+Create the DIRECTORY(ies), if they do not already exist.
 
 Options:
-  -o, --option=VALUE  Meaning
+  -a, --alias=ALIAS	create with alias as ALIAS,
+                   	used when creating only 1 directory.
+  -t, --type=TYPE	create with type as TYPE
+  -n, --name=NAME       create with long name as NAME
+  -v, --verbose		open an editor to edit the long name and detail.
+  -s, --set=SETTING	create with special SETTING.
 	EOF
 }
 
