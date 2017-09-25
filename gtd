@@ -246,7 +246,7 @@ Command alias will also be registerred if they are written in the .gtdrc
 
 gtd_ps1() {
 	local find_res=`find "$GTD_ROOT" -type d -wholename "$PWD"`
-	if [ ! -z $find_res ]; then # PWD is within GTD_ROOT
+	if [ -n $find_res ]; then # PWD is within GTD_ROOT
 		if [ "$GTD_ROOT" == "$PWD" ]; then
 			echo "GTD$ "
 		else	
@@ -285,7 +285,7 @@ gtd_init() {
 	PS1="\e[0;32m\$(gtd ps1)\e[m" # Green prompt
 
 	local short_gtd_root=`get_config short_gtd_root`
-	if [ ! -z "$short_gtd_root" ]; then
+	if [ -n "$short_gtd_root" ]; then
 		export $short_gtd_root="$GTD_ROOT"
 		echo "You can use \$$short_gtd_root"\
 		  "to refer GTD working directory."
@@ -361,7 +361,7 @@ gtd_add() {
 	done
 
 	path=`fs_get_new_fp`
-	if [ ! -z "$message" ]; then
+	if [ -n "$message" ]; then
 		install -D /dev/null "$path"
 		# 'install' can make the dirs on the way to the file
 		echo "$message" > "$path"
@@ -519,7 +519,7 @@ select_editor() { # need $editor in the caller and will manipulate
 	if [ -z "$editor" ]; then
 		if [ -z "$GTD_EDITOR" ]; then
 			editor=`get_config editor`
-			[ ! -z editor ] && \
+			[ -n editor ] && \
 			  vecho "Editor $editor specified from .gtdrc."
 		else
 			editor="$GTD_EDITOR"
@@ -527,9 +527,9 @@ select_editor() { # need $editor in the caller and will manipulate
 		fi
 	fi
 	if [ -z "$editor" ]; then
-		if [ ! -z `command -v vim` ]; then
+		if [ -n `command -v vim` ]; then
 			editor=vim
-		elif [ ! -z `command -v vi` ]; then
+		elif [ -n `command -v vi` ]; then
 			editor=vi
 		else
 			echo "No editor specified, and no vim or vi."
