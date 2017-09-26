@@ -309,20 +309,20 @@ Options:
 	EOF
 }
 
-get_max_dir_id() {
-	debug "get_max_dir_id()"
+max_dir_id() {
 	local max_id=0
 	for fp in "$(find "$GTD_ROOT" -type f -name ".id=*")"; do
 		[ -z "$fp" ] && continue
 		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
 		[ "$id" -gt "$max_id" ] && max_id=$id
 	done
+	debug "get_max_dir_id()=>$max_id"
 	echo $max_id
 }
 
 gen_new_dir_fn() {
-	debug "gen_dir_fn(ali=$alias, typ=$type, nm=$name, set=${setting[@]})"
-	local id=$(( `get_max_dir_id`+ 1 ))
+	debug "gen_new_dir_fn(a=$alias, t=$type, n=$name, s=${setting[@]})"
+	local id=$(( `max_dir_id`+ 1 ))
 	echo ".id=$id.marktree"
 }
 
@@ -397,58 +397,91 @@ Options:
   --template=TEMPLATE   Create from the TEMPLATE.
                         MESSAGE will be ignored when this option used.
   -t, --time=TIME       Create with the file time set to TIME.
+  -s, --set=SETTING     Create with the SETTINGs.
 	EOF
 }
 
+max_fid() {
+	local max_id=10000; local fp=""
+	while read fp; do # using "find..|while.." make while in subshell
+	  # then can pass max_id back, so here is a work around
+		[ -z "$fp" ] && continue
+		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
+		debug "$fp->id:$id ~~ $max_id"
+		[[ $id -gt $max_id ]] && max_id=$id
+	done < <(find "$GTD_ROOT" -type f -name "[!.]*.id=*")
+	  # [!.] to exclude hidden files -- those are for directories
+	debug "max_fid()=>$max_id"
+	echo $max_id
+}
+
+gen_new_fn() {
+	debug "gen_new_fn(a=$alias, t=$time, s=${setting[@]})"
+	local id=$(( `max_fid` + 1 ))
+	if [ -z "$time" ]; then
+		time_str=$(date +%Y%m%d%H%M%S)
+	else
+		time_str=$(date -d "$time" +%Y%m%d%H%M%S)
+	fi
+	echo "$time_str.id=$id.marktree"
+}
+
 gtd_add() {
-	PARAMS=`getopt -o ef:m:t: \
-	  --long editor:,file:,message:,template:,time: \
+	PARAMS=`getopt -o d:e:f:t:s: \
+	  --long dir:,editor:,file:,template:,time:,set: \
 	  -n 'gtd.add' -- "$@"`
 	[ $? -ne 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$PARAMS"
 	debug "gtd_add($@)"
-	local path=""; local message=""; local template=""
-	local time=""; local editor=""
+	local dir=""; local editor=""; local file=""; local template=""
+	local time=""; local settings=();
 	while : ; do
 		case "$1" in
+		-d|--dir) dir="$2"; shift 2;;
 		-e|--editor) editor="$2"; shift 2;;
-		-f|--file) path="$2"; shift 2;;
-		-m|--message) message="$2"; shift 2;;
+		-f|--file) file="$2"; shift 2;;
 		--template) template="$2"; shift 2;;
 		-t|--time) time="$2"; shift 2;;
+		-s|--set) settins+="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
+	local message="$*"
 
-	path=`fs_get_new_fp`
-	if [ -n "$message" ]; then
-		install -D /dev/null "$path"
-		# 'install' can make the dirs on the way to the file
-		echo "$message" > "$path"
-		echo "`basename $path` created."
+	if [ -n "$dir" ]; then
+		[ ! -d "$dir" ] && echo "Directory $dir not found!" && return
+		dir="$(cd "$dir" && pwd)"
+	else
+		dir="$PWD"
+	fi
+
+	local find_res=`find "$GTD_ROOT" -type d -wholename "$dir"`
+	if [ -z $find_res ]; then # dir is not in GTD_ROOT
+		echo "$dir is not in GTD_ROOT, can't add file."
 		return
 	fi
 
-	if [ $verbose == true ]; then # verbose -- open with an editor
+	if [[ -z "$message" && $verbose == false && -z "$editor" ]]; then
+		echo "Any stuff, please (ctrl-d to end, ctrl-c to cancel):"
+		[ $in_shell == true ] && trap "echo; return" INT
+		message=`cat` # save keyin until eof
+		if [ -z `echo $message | tr -d '[:space:]'` ]; then # empty?
+			echo "Nothing!"
+			return
+		fi
+	fi
+
+	local fn=$(gen_new_fn)
+	echo "$message" > "$dir/$fn"
+	echo "$dir/$fn created."
+
+	if [[ $verbose == true || -n "$editor" ]]; then
 		select_editor
 		[ -z "$editor" ] && return
-		install -D /dev/null "$path"
-		echo "Edit $path ..."
-		$editor "$path"
-		return
+		echo "Editing $dir/$fn with $editor ..."
+		$editor "$dir/$fn"
 	fi
-
-	echo "Any stuff, please (ctrl-d to end, ctrl-c to cancel):"
-	[ $in_shell == true ] && trap "echo; return" INT
-	local input=`cat` # save keyin until eof
-	if [ -z `echo $input | tr -d '[:space:]'` ]; then # empty check
-		echo "Nothing!"
-		return
-	fi
-	install -D /dev/null "$path"
-	echo "$input" > "$path"
-	echo "`basename $path` created."
 }
 #=== MOVE ======================================================================
 usage_move() {
