@@ -80,12 +80,9 @@ fx2fx() { # $1="set string"
 }
 
 #=== THE FILE SYSTEM ===========================================================
-# Every object in the library is a file.
-# Files are stored in directories named by their create years, e.g.
-#   2016/ 2017/ 2018/ ...
 # The name of a file contains its attributes, e.g.
 #   20170829103244.id=1001.alias=coding_style.tag=script,todo,closed.txt
-# Attributes are separated by a dot '.',
+# Attributes are separated by dots '.',
 # The first attribute is the create time, in the format of yyyymmddHHMMSS, e.g.
 #   20170829103244
 # The last attribute is the type or ext of the file, could be anything, e.g.
