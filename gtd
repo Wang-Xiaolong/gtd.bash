@@ -310,19 +310,14 @@ Options:
 }
 
 max_dir_id() {
-	local max_id=0; local fp=""
-	while read fp; do
-		[ -z "$fp" ] && continue
-		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
-		[ "$id" -gt "$max_id" ] && max_id=$id
-	done < <(find "$GTD_ROOT" -type f -name ".id=*")
-	debug "get_max_dir_id()=>$max_id"
-	echo $max_id
+	find "$GTD_ROOT" -type f -name ".id=*" -printf "%f\n" \
+	  | grep -o ".id=[0-9]*" | sed -e "s/.id=//" | sort -n | tail -1
 }
 
 gen_new_dir_fn() {
-	debug "gen_new_dir_fn(a=$alias, t=$type, n=$name, s=${setting[@]})"
-	local id=$(( `max_dir_id`+ 1 ))
+	local max_id=$(max_dir_id); local id
+	[ -z "$max_id" ] && id=1 || id=$(( $max_id + 1 ))
+	debug "gen_new_dir_fn(a=$alias, t=$type, n=$name, s=${setting[@]})=>$id"
 	echo ".id=$id.marktree"
 }
 
