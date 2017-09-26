@@ -557,16 +557,17 @@ List info about the FILEs (or directories, current directory by default)
 	EOF
 }
 
-list_dir() {
+list_dir() { # $1=path
 	debug "list_dir($@)"
+
 }
 
-list_file() {
+list_file() { # $1=path
 	debug "list_file($@)"
 }
 
-list_obj() { #$1=dir/id/alias
-	if [ -d "$1" ]; then
+list_obj() { # $1=dir/id/alias
+	if [ -d "$1" ]; then # $1 is a dir or file
 		local abs_path=`cd $1 && pwd`
 		local find_res=`find "$GTD_ROOT" -type d -wholename "$abs_path"`
 		if [ -z $find_res ]; then
@@ -575,7 +576,7 @@ list_obj() { #$1=dir/id/alias
 		fi
 		[ -d "$1" ] && list_dir "$abs_path" && return
 		list_file "$abs_path"
-	else
+	else # $1 is a id or alias
 		path=`fid2path $1`
 		[ -z "$path" ] && echo "$1 not found!" && return
 		bn=`basename "$path"`
