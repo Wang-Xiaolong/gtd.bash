@@ -402,21 +402,14 @@ Options:
 }
 
 max_fid() {
-	local max_id=10000; local fp=""
-	while read fp; do # using "find..|while.." make while in subshell
-	  # then can pass max_id back, so here is a work around
-		[ -z "$fp" ] && continue
-		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
-		[ $id -gt $max_id ] && max_id=$id
-	done < <(find "$GTD_ROOT" -type f -name "[!.]*.id=*")
-	  # [!.] to exclude hidden files -- those are for directories
-	debug "max_fid()=>$max_id"
-	echo $max_id
+	find "$GTD_ROOT" -type f -name "[!.]*.id=*" -printf "%f\n" \
+	  | grep -o ".id=[0-9]*" | sed -e "s/.id=//" | sort -n | tail -1
 }
 
 gen_new_fn() {
 	debug "gen_new_fn(a=$alias, t=$time, s=${setting[@]})"
-	local id=$(( `max_fid` + 1 ))
+	local max_fid=$(max_fid); local id=""
+	[ -z "$max_fid" ] && id=10000 || id=$(( $max_fid + 1 ))
 	if [ -z "$time" ]; then
 		time_str=$(date +%Y%m%d%H%M%S)
 	else
