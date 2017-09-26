@@ -310,12 +310,12 @@ Options:
 }
 
 max_dir_id() {
-	local max_id=0
-	for fp in "$(find "$GTD_ROOT" -type f -name ".id=*")"; do
+	local max_id=0; local fp=""
+	while read fp; do
 		[ -z "$fp" ] && continue
 		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
 		[ "$id" -gt "$max_id" ] && max_id=$id
-	done
+	done < <(find "$GTD_ROOT" -type f -name ".id=*")
 	debug "get_max_dir_id()=>$max_id"
 	echo $max_id
 }
@@ -407,8 +407,7 @@ max_fid() {
 	  # then can pass max_id back, so here is a work around
 		[ -z "$fp" ] && continue
 		local id="$(basename "$fp" | cut -d '.' -f 2 | cut -d '=' -f 2)"
-		debug "$fp->id:$id ~~ $max_id"
-		[[ $id -gt $max_id ]] && max_id=$id
+		[ $id -gt $max_id ] && max_id=$id
 	done < <(find "$GTD_ROOT" -type f -name "[!.]*.id=*")
 	  # [!.] to exclude hidden files -- those are for directories
 	debug "max_fid()=>$max_id"
