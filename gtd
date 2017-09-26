@@ -94,27 +94,9 @@ fx2fx() { # $1="set string"
 #   attribute=value or attribute=value1,value2,... e.g.
 #   id=1001 or category=home,office,car
 
-GTD_ID_BASE=1000
-fs_get_max_id() { # no arg; +1 to create new id number
-	local res=`ls "$GTD_ROOT" -R -1 | grep ".id=" | cut -d '.' -f 2 \
-	  | cut -d '=' -f 2 | sort -n | tail -n1`
-	[ -z "$res" ] && echo "$GTD_ID_BASE" || echo "$res"
-}
-
-fs_get_new_fn() { # fn: file name;
-	local date=`date +%Y%m%d%H%M%S`
-	local id=$(( `fs_get_max_id` + 1 ))
-	echo "$date.id=$id.mt"
-}
-
 fs_fn2fp() { # fp: file path; $1=fn
 	local year=${1:0:4}
 	echo "$GTD_ROOT/$year/$1"
-}
-
-fs_get_new_fp() {
-	local fn=`fs_get_new_fn`
-	fs_fn2fp "$fn"
 }
 
 fs_id2fn() { # $1=id
@@ -125,15 +107,6 @@ fs_id2fp() { # $1=id
 	local fn=`fs_id2fn "$1"`
 	[ -z "$fn" ] && return
 	fs_fn2fp "$fn"
-}
-
-fs_parse_fn() { # $1=fn; fn->fields
-	IFS='.' read -ra PARTS <<< "$1"
-	for str in "${PARTS[@]}"; do
-		echo $str
-	done
-	echo "${PARTS[0]}" # time
-	echo "${PARTS[-1]}" # type
 }
 
 fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
@@ -724,9 +697,6 @@ gtd_test() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
-
-	fn=`fs_id2fn 1006`
-	fs_parse_fn $fn
 }
 #=== SHELL =====================================================================
 usage_shell() {  #heredoc
