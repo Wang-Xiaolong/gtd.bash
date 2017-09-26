@@ -407,7 +407,6 @@ max_fid() {
 }
 
 gen_new_fn() {
-	debug "gen_new_fn(a=$alias, t=$time, s=${setting[@]})"
 	local max_fid=$(max_fid); local id=""
 	[ -z "$max_fid" ] && id=10000 || id=$(( $max_fid + 1 ))
 	if [ -z "$time" ]; then
@@ -415,6 +414,7 @@ gen_new_fn() {
 	else
 		time_str=$(date -d "$time" +%Y%m%d%H%M%S)
 	fi
+	debug "gen_new_fn(a=$alias, t=$time, s=${setting[@]})=>$id"
 	echo "$time_str.id=$id.marktree"
 }
 
