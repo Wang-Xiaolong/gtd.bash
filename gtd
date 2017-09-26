@@ -512,21 +512,37 @@ List info about the FILEs (or directories, current directory by default)
 	EOF
 }
 
+print_dir_info() { # $1=path
+	local ifile=$(find $1 -name ".id=*")
+	[ -z "$ifile" ] && basename $1 && return
+	local ifn="$(basename "$ifile")"
+	IFS='.' read -ra PARTS <<< "$ifn"
+	local id=`echo "${PARTS[1]}" | sed -e "s/id=//"`
+	printf "[%s] %s: " "$id" "$(basename "$1")"
+	head -1 "$ifile" | sed -e "s/<mt.*>//"
+}
+
+print_file_info() { # $1=path
+	local fn="$(basename "$1")"
+	IFS='.' read -ra PARTS <<< "$fn"
+	local ct="${PARTS[0]}" # create time
+	local cts="${ct:2:2}${ct:4:2}${ct:6:2} ${ct:8:2}:${ct:10:2}"
+	local id=`echo "${PARTS[1]}" | sed -e "s/id=//"`
+	printf "%s %s " "$cts" "$id"
+	local ext="${PARTS[-1]}"
+	if [ $ext == marktree ]; then
+		head -1 "$1" | sed -e "s/<mt.*>//"
+	else
+		printf "[$s]\n" "$ext"
+	fi
+}
+
 list_dir() { # $1=path
 	debug "list_dir($@)"
 	while read fn; do
-		IFS='.' read -ra PARTS <<< "$fn"
-		local ct="${PARTS[0]}" # create time
-		local cts="${ct:2:2}${ct:4:2}${ct:6:2} ${ct:8:2}:${ct:10:2}"
-		local id=`echo "${PARTS[1]}" | sed -e "s/id=//"`
-		printf "%s %s " "$cts" "$id"
-		local ext="${PARTS[-1]}"
-		if [ $ext == marktree ]; then
-			head -1 "$1/$fn" | sed -e "s/<mt.*>//"
-		else
-			printf "[$s]\n" "$ext"
-		fi
-	done < <(ls -1 $1)
+		[ -d "$1/$fn" ] && print_dir_info "$1/$fn" && continue
+		print_file_info "$1/$fn"
+	done < <(ls -1 -r $1)
 }
 
 list_file() { # $1=path
@@ -574,10 +590,6 @@ gtd_list() {
 			list_obj "$file"
 		done
 	fi
-
-#	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
-#		fs_print_fi "$fn" "1n"
-#	done
 }
 #=== Edit =====================================================================
 usage_edit() {
