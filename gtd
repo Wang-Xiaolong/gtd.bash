@@ -550,12 +550,38 @@ gtd_move() {
 #=== LIST ======================================================================
 usage_list() {
 	cat<<-EOF
-Usage:
-  gtd list [OPTION]...
-  gtd list [OPTION]...
+Usage: gtd list [OPTION]... [FILE]...
+List info about the FILEs (or directories, current directory by default)
 
   -o, --option=VALUE  Meaning
 	EOF
+}
+
+list_dir() {
+	debug "list_dir($@)"
+}
+
+list_file() {
+	debug "list_file($@)"
+}
+
+list_obj() { #$1=dir/id/alias
+	if [ -d "$1" ]; then
+		local abs_path=`cd $1 && pwd`
+		local find_res=`find "$GTD_ROOT" -type d -wholename "$abs_path"`
+		if [ -z $find_res ]; then
+			echo "$1 is not in GTD_ROOT"
+			return
+		fi
+		[ -d "$1" ] && list_dir "$abs_path" && return
+		list_file "$abs_path"
+	else
+		path=`fid2path $1`
+		[ -z "$path" ] && echo "$1 not found!" && return
+		bn=`basename "$path"`
+		[[ $bn == .* ]] && list_dir "$(dirname "$path")" && return
+		list_file "$path"
+	fi
 }
 
 gtd_list() {
@@ -573,10 +599,17 @@ gtd_list() {
 		*) echo "Unknown option: $1"; return;;
 		esac
 	done
+	if [ $# -eq 0 ]; then
+		list_obj "."
+	else
+		for file in "$@"; do
+			list_obj "$file"
+		done
+	fi
 
-	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
-		fs_print_fi "$fn" "1n"
-	done
+#	for fn in `ls -R -r -1 "$GTD_ROOT" | grep ".id="`; do
+#		fs_print_fi "$fn" "1n"
+#	done
 }
 #=== Edit =====================================================================
 usage_edit() {
