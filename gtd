@@ -384,16 +384,19 @@ gtd_mkdir() {
 #=== ADD =======================================================================
 usage_add() {
 	cat<<-EOF
-Usage: gtd add [OPTION]... [DIRECTORY]
-Create a file in DIRECTORY, or current working directory if no DIRECTORY.
+Usage: gtd add [OPTION]... [MESSAGE]...
+Create a file with the content of MESSAGE.
+If MESSAGE is not provided, an empty file will be created.
 
 Options:
-  -f, --file=PATH               Import a file into the library.
-  -n, --name=NAME               Create and specify the NAME of the file.
-  -e, --editor=EDITOR           Create and edit with EDITOR.
-  -v, --verbose                 Create and edit with EDITOR or system editor.
-      --template=TEMPLATE       Create from the TEMPLATE.
-  -t, --time=TIME               Create with a time set to TIME.
+  -d, --dir=DIR         Create within the DIR directory.
+  -e, --editor=EDITOR   Create and edit with EDITOR.
+  -v, --verbose         Create and edit with EDITOR or system editor.
+  -f, --file=PATH       Import a file into the library.
+                        MESSAGE will be ignored when this option used.
+  --template=TEMPLATE   Create from the TEMPLATE.
+                        MESSAGE will be ignored when this option used.
+  -t, --time=TIME       Create with the file time set to TIME.
 	EOF
 }
 
