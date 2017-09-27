@@ -412,8 +412,10 @@ gtd_add() {
 	local message="$*"
 
 	if [ -n "$dir" ]; then
-		[ ! -d "$dir" ] && echo "Directory $dir not found!" && return
-		dir="$(cd "$dir" && pwd)"
+		dir_path="$(str2path $dir)"
+		[ -z "$dir_path" ] && echo "No directory $dir found." && return
+		[ -f "$dir_path" ] && dir="$(dirname "$dir_path")" \
+		  || dir="$dir_path"
 	else
 		dir="$PWD"
 	fi
