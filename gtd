@@ -531,7 +531,7 @@ print_file_info() { # $1=path
 	local ct="${PARTS[0]}" # create time
 	local cts="${ct:2:2}${ct:4:2}${ct:6:2} ${ct:8:2}:${ct:10:2}"
 	local id=`echo "${PARTS[1]}" | sed -e "s/id=//"`
-	printf "%s %s " "$cts" "$id"
+	printf "%s [%s] " "$cts" "$id"
 	local ext="${PARTS[-1]}"
 	if [ $ext == marktree ]; then
 		head -1 "$1" | sed -e "s/<mt.*>//"
