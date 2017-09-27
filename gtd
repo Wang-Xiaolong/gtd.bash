@@ -524,6 +524,7 @@ print_dir_info() { # $1=path
 
 print_file_info() { # $1=path
 	local fn="$(basename "$1")"
+	[[ "$fn" != "*.id=*" ]] && echo "$fn" && return
 	IFS='.' read -ra PARTS <<< "$fn"
 	local ct="${PARTS[0]}" # create time
 	local cts="${ct:2:2}${ct:4:2}${ct:6:2} ${ct:8:2}:${ct:10:2}"
