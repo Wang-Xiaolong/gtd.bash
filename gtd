@@ -29,114 +29,6 @@ vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
 str_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
-#=== FILE ======================================================================
-# fn: file name
-# fx: file attributs
-#   ftime
-#   fid
-#   falias
-#   fparent
-#   fdep
-#   fname
-#   ftype
-#   fattr[]
-fn2fx() { # $1=fn; output: ftime, fid, ftype, fattr[]
-	debug "fn2fx($1)"
-	local PARTS, part
-	IFS='.' read -ra PARTS <<< "$1"
-	ftime=${PARTS[0]}; debug "ftime=$ftime"
-	fid=${PARTS[1]:3}; debug "fid=$fid" # :3 to bypass id=
-	ftype=${PARTS[-1]}; debug "ftype=$ftype"
-	local attr_cnt=${#PARTS[@]}
-	if [ $attr_cnt -le 3 ]; then
-		debug "attr_cnt=$attr_cnt, no additional attributes."
-		return
-	fi
-	attr_cnt=$attr_cnt-3
-	for part in "${PARTS[@]:2:$attr_cnt}"; do # get all other fields
-		fattr+=("$part")
-	done
-	debug "fattr: ${fattr[@]}"
-}
-
-fx2fn() { # input: ftime, fid, ftype, fattr[]; output: echo fn
-	local fn="$ftime.id=$fid"
-	for attr in "${fattr[@]}"; do
-		fn="$fn.$attr"
-	done
-	fn="$fn.$ftype"
-	echo "$fn"
-}
-
-#debug=true
-#ftime=fid=ftype=""
-#fattr=()
-#fn2fx "11.id=12.pr=13.dep=14.name=hello.marktree"
-#fx2fn
-#exit
-
-fx2fx() { # $1="set string"
-	return
-}
-
-#=== THE FILE SYSTEM ===========================================================
-# The name of a file contains its attributes, e.g.
-#   20170829103244.id=1001.alias=coding_style.tag=script,todo,closed.txt
-# Attributes are separated by dots '.',
-# The first attribute is the create time, in the format of yyyymmddHHMMSS, e.g.
-#   20170829103244
-# The last attribute is the type or ext of the file, could be anything, e.g.
-#   txt, log, doc, ppt, jpg ... the default created type is mt, the marktree.
-# The attributes in the middle need to be formatted as
-#   attribute=value or attribute=value1,value2,... e.g.
-#   id=1001 or category=home,office,car
-
-str2path() { # $1=str, could be path, id or alias
-  # GTD directory -> ifile path
-  # non-GTD directory -> directory path
-  # Any file -> file path
-	if [ -e "$1" ]; then # $1 is a real path
-		if [ -d "$1" ]; then # $1 is a dir
-			local ifile="$(find "$1" -maxdepth 1 \
-			  -type f -name ".id=*")"
-			[ -n "$ifile" ] && echo "$ifile" && return
-		fi
-		echo "$1"
-	elif [ "$1" == 0 ]; then
-		echo "$GTD_ROOT"
-	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
-		find "$GTD_ROOT" -type f -name "*.id=$1.*"
-	else # $1=alias
-		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
-	fi
-}
-
-fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
-  # 0 -- file info only, 1 line
-  # 1 -- file info and 1 content line, 1 or 2 lines
-  # 2+ -- file info and 2+ content line
-  # v -- file info and view all content
-	IFS='.' read -ra PARTS <<< "$1"
-	local ct="${PARTS[0]}" # create time
-	local cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
-	local id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
-	local ext="${PARTS[-1]}"
-	local fp=`fs_fn2fp $1` # file path
-	if [ "$2" == "1n" ]; then # put 1n here is improve 1n perf
-		[ "$ext" == "mt" ] && \
-		  n1=`head -n1 "$fp" | sed 's/<mt.*>//g'` \
-		  || n1="[$ext]"
-		echo "[$cts] $id: $n1"
-		return
-	fi
-
-	case "$2" in
-	2n) echo ;;
-	8n) echo ;;
-	full) echo ;;
-	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
-	esac
-}
 #==- CONFIG: .gtdrc ============================================================
 usage_config() {
 	cat<<-EOF
@@ -265,6 +157,114 @@ gtd_init() {
 		echo "You can use \$$short_gtd_root"\
 		  "to refer GTD working directory."
 	fi
+}
+#=== FILE ======================================================================
+# fn: file name
+# fx: file attributs
+#   ftime
+#   fid
+#   falias
+#   fparent
+#   fdep
+#   fname
+#   ftype
+#   fattr[]
+fn2fx() { # $1=fn; output: ftime, fid, ftype, fattr[]
+	debug "fn2fx($1)"
+	local PARTS, part
+	IFS='.' read -ra PARTS <<< "$1"
+	ftime=${PARTS[0]}; debug "ftime=$ftime"
+	fid=${PARTS[1]:3}; debug "fid=$fid" # :3 to bypass id=
+	ftype=${PARTS[-1]}; debug "ftype=$ftype"
+	local attr_cnt=${#PARTS[@]}
+	if [ $attr_cnt -le 3 ]; then
+		debug "attr_cnt=$attr_cnt, no additional attributes."
+		return
+	fi
+	attr_cnt=$attr_cnt-3
+	for part in "${PARTS[@]:2:$attr_cnt}"; do # get all other fields
+		fattr+=("$part")
+	done
+	debug "fattr: ${fattr[@]}"
+}
+
+fx2fn() { # input: ftime, fid, ftype, fattr[]; output: echo fn
+	local fn="$ftime.id=$fid"
+	for attr in "${fattr[@]}"; do
+		fn="$fn.$attr"
+	done
+	fn="$fn.$ftype"
+	echo "$fn"
+}
+
+#debug=true
+#ftime=fid=ftype=""
+#fattr=()
+#fn2fx "11.id=12.pr=13.dep=14.name=hello.marktree"
+#fx2fn
+#exit
+
+fx2fx() { # $1="set string"
+	return
+}
+
+#=== THE FILE SYSTEM ===========================================================
+# The name of a file contains its attributes, e.g.
+#   20170829103244.id=1001.alias=coding_style.tag=script,todo,closed.txt
+# Attributes are separated by dots '.',
+# The first attribute is the create time, in the format of yyyymmddHHMMSS, e.g.
+#   20170829103244
+# The last attribute is the type or ext of the file, could be anything, e.g.
+#   txt, log, doc, ppt, jpg ... the default created type is mt, the marktree.
+# The attributes in the middle need to be formatted as
+#   attribute=value or attribute=value1,value2,... e.g.
+#   id=1001 or category=home,office,car
+
+str2path() { # $1=str, could be path, id or alias
+  # GTD directory -> ifile path
+  # non-GTD directory -> directory path
+  # Any file -> file path
+	if [ -e "$1" ]; then # $1 is a real path
+		if [ -d "$1" ]; then # $1 is a dir
+			local ifile="$(find "$1" -maxdepth 1 \
+			  -type f -name ".id=*")"
+			[ -n "$ifile" ] && echo "$ifile" && return
+		fi
+		echo "$1"
+	elif [ "$1" == 0 ]; then
+		echo "$GTD_ROOT"
+	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
+		find "$GTD_ROOT" -type f -name "*.id=$1.*"
+	else # $1=alias
+		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
+	fi
+}
+
+fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
+  # 0 -- file info only, 1 line
+  # 1 -- file info and 1 content line, 1 or 2 lines
+  # 2+ -- file info and 2+ content line
+  # v -- file info and view all content
+	IFS='.' read -ra PARTS <<< "$1"
+	local ct="${PARTS[0]}" # create time
+	local cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
+	local id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
+	local ext="${PARTS[-1]}"
+	local fp=`fs_fn2fp $1` # file path
+	if [ "$2" == "1n" ]; then # put 1n here is improve 1n perf
+		[ "$ext" == "mt" ] && \
+		  n1=`head -n1 "$fp" | sed 's/<mt.*>//g'` \
+		  || n1="[$ext]"
+		echo "[$cts] $id: $n1"
+		return
+	fi
+
+	case "$2" in
+	2n) echo ;;
+	8n) echo ;;
+	full) echo ;;
+	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
+	esac
 }
 #=== Mkdir =====================================================================
 usage_mkdir() {
