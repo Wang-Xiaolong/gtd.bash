@@ -91,6 +91,26 @@ fx2fx() { # $1="set string"
 #   attribute=value or attribute=value1,value2,... e.g.
 #   id=1001 or category=home,office,car
 
+str2path() { # $1=str, could be path, id or alias
+  # GTD directory -> ifile path
+  # non-GTD directory -> directory path
+  # Any file -> file path
+	if [ -e "$1" ]; then # $1 is a real path
+		if [ -d "$1" ]; then # $1 is a dir
+			local ifile="$(find "$1" -maxdepth 1 \
+			  -type f -name ".id=*")"
+			[ -n "$ifile" ] && echo "$ifile" && return
+		fi
+		echo "$1"
+	elif [ "$1" == 0 ]; then
+		echo "$GTD_ROOT"
+	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
+		find "$GTD_ROOT" -type f -name "*.id=$1.*"
+	else # $1=alias
+		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
+	fi
+}
+
 fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
   # 0 -- file info only, 1 line
   # 1 -- file info and 1 content line, 1 or 2 lines
@@ -627,26 +647,6 @@ select_editor() { # need $editor in the caller and will manipulate
 			echo "Editor $editor not exist, please try another."
 			return
 		fi
-	fi
-}
-
-str2path() { # $1=str, could be path, id or alias
-  # GTD directory -> ifile path
-  # non-GTD directory -> directory path
-  # Any file -> file path
-	if [ -e "$1" ]; then # $1 is a real path
-		if [ -d "$1" ]; then # $1 is a dir
-			local ifile="$(find "$1" -maxdepth 1 \
-			  -type f -name ".id=*")"
-			[ -n "$ifile" ] && echo "$ifile" && return
-		fi
-		echo "$1"
-	elif [ "$1" == 0 ]; then
-		echo "$GTD_ROOT"
-	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
-		find "$GTD_ROOT" -type f -name "*.id=$1.*"
-	else # $1=alias
-		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
 	fi
 }
 
