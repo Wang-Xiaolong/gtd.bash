@@ -429,7 +429,7 @@ gtd_add() {
 usage_move() {
 	cat<<-EOF
 Usage: gtd move [OPTION]... SOURCE... DEST
-   or: gtd move -t DESTIN SOURCE...
+   or: gtd move -t DEST SOURCE...
 Move all files specified by SOURCE under the file of DEST.
 
 Options:
