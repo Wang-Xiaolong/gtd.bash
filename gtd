@@ -640,12 +640,20 @@ select_editor() { # need $editor in the caller and will manipulate
 	fi
 }
 
-path_id_alias_to_fp() { # $1=path|id|alias
-	if [ -d "$1" ]; then
-		echo "$(ls -a $1/.id=*)"	
-	elif [[ $1 =~ ^[0-9]+$ ]]; then
+str2path() { # $1=str, could be path, id or alias
+  # GTD directory -> ifile path
+  # non-GTD directory -> directory path
+  # Any file -> file path
+	if [ -e "$1" ]; then # $1 is a real path
+		if [ -d "$1" ]; then # $1 is a dir
+			local ifile="$(find "$1" -maxdepth 1 \
+			  -type f -name ".id=*")"
+			[ -n "$ifile" ] && echo "$ifile" && return
+		fi
+		echo "$1"
+	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
 		find "$GTD_ROOT" -type f -name "*.id=$1.*"
-	else
+	else # $1=alias
 		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
 	fi
 }
@@ -673,13 +681,12 @@ gtd_edit() {
 	if [ $# -eq 0 ]; then # no arg -- edit this script file
 		fn="${BASH_SOURCE[0]}"
 	else
-		fn=`path_id_alias_to_fp $1`
-		[ -z "$fn" ] && echo "ID $1 not found." && return
+		fn=`str2path $1`
+		[ -z "$fn" ] && echo "$1 not found." && return
 	fi
 	echo "Edit $fn ..."
 	$editor "$fn"
 }
-
 #=== TEST functions in place ===================================================
 usage_test() {
 	cat<<-EOF
