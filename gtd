@@ -524,7 +524,7 @@ print_dir_info() { # $1=path
 
 print_file_info() { # $1=path
 	local fn="$(basename "$1")"
-	[[ "$fn" != "*.id=*" ]] && echo "$fn" && return
+	[[ "$fn" != *.id=* ]] && echo "$fn" && return
 	IFS='.' read -ra PARTS <<< "$fn"
 	local ct="${PARTS[0]}" # create time
 	local cts="${ct:2:2}${ct:4:2}${ct:6:2} ${ct:8:2}:${ct:10:2}"
@@ -538,35 +538,45 @@ print_file_info() { # $1=path
 	fi
 }
 
-list_dir() { # $1=path
+list_dir() { # $1=abs path of dir or ifile
 	debug "list_dir($@)"
+	local dir=""
+	if [ -d "$1" ]; then
+		dir="$1"
+		echo "-- $1"
+	else # ifile
+		dir="$(cd $(dirname "$1") && pwd)"
+		echo "-- GTD:${dir#$GTD_ROOT}:`print_dir_info "$dir"`"
+	fi
+
+	debug "dir=$dir"
 	while read fn; do
-		[ -d "$1/$fn" ] && print_dir_info "$1/$fn" && continue
-		print_file_info "$1/$fn"
-	done < <(ls -1 -r $1)
+		[ -d "$dir/$fn" ] && print_dir_info "$dir/$fn" && continue
+		print_file_info "$dir/$fn"
+	done < <(ls -1 -r $dir)
 }
 
 list_file() { # $1=path
 	debug "list_file($@)"
 }
 
-list_obj() { # $1=dir/id/alias
-	if [ -d "$1" ]; then # $1 is a dir or file
-		local abs_path=`cd $1 && pwd`
-		local find_res=`find "$GTD_ROOT" -type d -wholename "$abs_path"`
-		if [ -z $find_res ]; then
-			echo "$1 is not in GTD_ROOT"
-			return
-		fi
-		[ -d "$1" ] && list_dir "$abs_path" && return
-		list_file "$abs_path"
-	else # $1 is a id or alias
-		path=`fid2path $1`
-		[ -z "$path" ] && echo "$1 not found!" && return
-		bn=`basename "$path"`
-		[[ $bn == .* ]] && list_dir "$(dirname "$path")" && return
-		list_file "$path"
+list_obj() { # $1=str:dir/file/id/alias
+	local path="$(str2path "$1")"
+	[ -z "$path" ] && echo "$1 not found." && return
+	debug "path=$path"
+	if [ -d "$path" ]; then # $1 is a common dir or GTD_ROOT
+		local abs_path=`cd $path && pwd`
+		debug "abs_path=$abs_path"
+		list_dir "$abs_path"
+		return
 	fi
+	# path is a file or ifile
+	local bn="$(basename $path)"
+	debug "bn=$bn"
+	[[ "$bn" == .id=* ]] && list_dir "$path" && return
+	[[ "$bn" == *.id=* ]] && list_file "$path" && return
+	echo "-- $1"
+	echo "$bn"
 }
 
 gtd_list() {
