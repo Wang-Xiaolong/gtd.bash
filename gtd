@@ -513,7 +513,7 @@ List info about the FILEs (or directories, current directory by default)
 }
 
 print_dir_info() { # $1=path
-	local ifile=$(find $1 -name ".id=*")
+	local ifile=$(find $1 -maxdepth 1 -name ".id=*")
 	[ -z "$ifile" ] && basename $1 && return
 	local ifn="$(basename "$ifile")"
 	IFS='.' read -ra PARTS <<< "$ifn"
