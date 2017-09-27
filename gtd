@@ -474,9 +474,7 @@ gtd_move() {
 		fi
 		source=( "$@" )
 	fi
-	# TODO: if dest is under source, no move
-	# TODO: if dest==source, no move
-	# TODO: if already in, no move
+
 	local dest_dir=`str2path "$dest"`
 	[ -z "$dest_dir" ] && echo "No dest $dest found." && return
 	[ -f "$dest_dir" ] && dest_dir="$(dirname "$dest_dir")"
