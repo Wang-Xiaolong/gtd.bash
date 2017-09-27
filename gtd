@@ -442,7 +442,7 @@ gtd_move_1file() { # $1=src str; input: $dest_dir
 	[ -z "$src_path" ] && echo "No source $src found." && continue
 	[[ "$(basename "$src_path")" == .id=* ]] \
 	  && src_path="$(dirname "$src_path")"
-	debug "mv $src_path $dest_dir"
+	echo "mv $src_path $dest_dir"
 	mv "$src_path" "$dest_dir"
 }
 
@@ -477,7 +477,6 @@ gtd_move() {
 	# TODO: if dest is under source, no move
 	# TODO: if dest==source, no move
 	# TODO: if already in, no move
-	# TODO: dest is 0, move to root
 	local dest_dir=`str2path "$dest"`
 	[ -z "$dest_dir" ] && echo "No dest $dest found." && return
 	[ -f "$dest_dir" ] && dest_dir="$(dirname "$dest_dir")"
@@ -644,6 +643,8 @@ str2path() { # $1=str, could be path, id or alias
 			[ -n "$ifile" ] && echo "$ifile" && return
 		fi
 		echo "$1"
+	elif [ "$1" == 0 ]; then
+		echo "$GTD_ROOT"
 	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
 		find "$GTD_ROOT" -type f -name "*.id=$1.*"
 	else # $1=alias
