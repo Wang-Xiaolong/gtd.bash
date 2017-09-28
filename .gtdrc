@@ -1,0 +1,8 @@
+# Sample .gtdrc
+editor = vim
+short_gtd_root = GG
+[alias]
+	gga = gtd a
+	ggl = gtd l
+	gge = gtd e
+	ggc = . gtd cd
