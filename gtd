@@ -230,7 +230,7 @@ str2path() { # $1=str, could be path, id or alias
 			  -type f -name ".id=*")"
 			[ -n "$ifile" ] && echo "$ifile" && return
 		fi
-		echo "$1"
+		echo "$1" # common file (could be GTD or not) or dir
 	elif [ "$1" == 0 ]; then
 		echo "$GTD_ROOT"
 	elif [[ $1 =~ ^[0-9]+$ ]]; then # $1=id
@@ -568,10 +568,8 @@ list_dir() { # $1=abs path of dir or ifile
 	local dir=""
 	if [ -d "$1" ]; then
 		dir="$1"
-		echo "-- $1"
 	else # ifile
 		dir="$(cd $(dirname "$1") && pwd)"
-		echo "-- GTD:${dir#$GTD_ROOT}:`print_dir_info "$dir"`"
 	fi
 
 	debug "dir=$dir"
@@ -579,29 +577,59 @@ list_dir() { # $1=abs path of dir or ifile
 		[ -d "$dir/$fn" ] && print_dir_info "$dir/$fn" && continue
 		print_file_info "$dir/$fn"
 	done < <(ls -1 -r $dir)
-}
-
-list_file() { # $1=path
-	debug "list_file($@)"
+	echo
 }
 
 list_obj() { # $1=str:dir/file/id/alias
+  # path to non-GTD dir: $1: --then list dir & file
+  # path to GTD dir: $1->relative path [id]  --then list dir & file
+  # path to non-GTD file: $1
+  # path to GTD file: $1->time [id] message
+  # id/alias to dir: $1->relative path [id] long name --then list dir & file
+  # id/alias to file: $1->relative path time [id] message
 	local path="$(str2path "$1")"
 	[ -z "$path" ] && echo "$1 not found." && return
 	debug "path=$path"
-	if [ -d "$path" ]; then # $1 is a common dir or GTD_ROOT
-		local abs_path=`cd $path && pwd`
-		debug "abs_path=$abs_path"
-		list_dir "$abs_path"
-		return
+	local bn; local rpath; local h1; local dln; local fln
+	if [ -e "$1" ]; then
+		if [ -d "$1" ]; then
+			if [ -d "$path" ]; then
+				echo "$1:"
+			else # path is ifile
+				bn="$(basename "$path")"
+				dln="$(echo $bn | \
+				  sed -e "s/.id=\([0-9]*\).*/[\1]/")"
+				h1="$(head -1 "$path")"
+				printf "$1->$dln $h1\n"
+			fi
+			list_dir "$(dirname "$path")"
+		else # $1 is file
+			bn="$(basename "$1")"
+			if [[ "$bn" == *.id=* ]]; then # GTD file
+				fln="$(echo $bn | sed -e \
+				  "s/\([0-9]*\).id=\([0-9]*\).*/\1 [\2]/")"
+				h1="$(head -1 "$path")"
+				printf "$1->$fln $h1\n\n"
+			else
+				printf "$1\n\n"
+			fi
+		fi
+	else # $1 is id|alias
+		rpath="$(cd $(dirname "$path") && pwd)"
+		rpath="${rpath#$GTD_ROOT}"
+		h1="$(head -1 "$path")"
+		printf "$1->#$rpath "
+		bn="$(basename "$path")"
+		if [[ "$bn" == .id=* ]]; then # ifile
+			dln="$(echo $bn | sed -e "s/.id=\([0-9]*\).*/[\1]/")"
+			printf "$dln $h1\n"
+			list_dir "$(dirname "$path")"
+		else # file
+			fln="$(echo $bn | \
+			  sed -e "s/\([0-9]*\).id=\([0-9]*\).*/\1 [\2]/")"
+			printf "$fln $h1\n\n"
+		fi
 	fi
-	# path is a file or ifile
-	local bn="$(basename $path)"
-	debug "bn=$bn"
-	[[ "$bn" == .id=* ]] && list_dir "$path" && return
-	[[ "$bn" == *.id=* ]] && list_file "$path" && return
-	echo "-- $1"
-	echo "$bn"
 }
 
 gtd_list() {
