@@ -355,7 +355,7 @@ gtd_mkdir() {
 usage_cd() {
 	cat<<-EOF
 Usage: . $0 cd DIR
-Change the working directory to DIR.
+Change the working directory to DIR. Should be run in source mode.
 	EOF
 }
 
