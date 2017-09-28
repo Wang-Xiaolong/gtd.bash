@@ -266,7 +266,7 @@ fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
 	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
 	esac
 }
-#=== Mkdir =====================================================================
+#=== MD/MKDIR ==================================================================
 usage_mkdir() {
 	cat<<-EOF
 Usage: gtd mkdir [OPTION]... DIRECTORY...
@@ -350,6 +350,29 @@ gtd_mkdir() {
 			$editor "$dir/$fn"
 		fi
 	done
+}
+#=== CD/CHDIR ==================================================================
+usage_cd() {
+	cat<<-EOF
+Usage: . $0 cd DIR
+Change the working directory to DIR.
+	EOF
+}
+
+gtd_cd() {
+	[ -z "$GTD_ROOT" ] && echo "GTD not init." && return
+	if [[ "$0" != *"bash" ]]; then # $0 is path of bash indicate
+	  # it runs in current shell (or source mode, ". gtd"),
+	  # cd should run in current shell to keep the PWD.
+		echo "cd should be run in source mode: '. $0 init'"
+		usage_cd
+		return
+	fi
+	[ $# -eq 0 ] && return
+	local dir="$(str2path "$1")"
+	[ -z "$dir" ] && echo "Directory $1 not found." && return
+	[ -f "$dir" ] && cd "$(dirname "$dir")" && return
+	cd "$dir"
 }
 #=== ADD =======================================================================
 usage_add() {
@@ -718,6 +741,7 @@ process_command() {
 	ps1) gtd_ps1;;
 	config) [ $help_me == true ] && usage_config || vim "$GTD_ROOT/.gtdrc";;
 	md|mkdir) shift; [ $help_me == true ] && usage_mkdir || gtd_mkdir "$@";;
+	cd) shift; [ $help_me == true ] && usage_cd || gtd_cd "$@";;
 	a|add) shift; [ $help_me == true ] && usage_add || gtd_add "$@";;
 	m|mv|move) shift; [ $help_me == true ] && usage_move || gtd_move "$@";;
 	l|ls|list) shift; [ $help_me == true ] && usage_list || gtd_list "$@";;
@@ -761,7 +785,7 @@ for arg in "$@"; do
 	esac
 done
 
-if [[ $help_me == false && "$1" != init ]]; then
+if [[ $help_me == false && "$1" != init && "$1" != cd ]]; then
   # help_me will always be processed (because showing help need nearly nothing)
   # init will always be processed
   # other commands need at least a working dir, and should run in child shell
