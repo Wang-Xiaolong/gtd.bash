@@ -3,6 +3,8 @@ editor = vim
 short_gtd_root = GG
 [alias]
 	gga = gtd a
-	ggl = gtd l
+	ggls = gtd l
 	gge = gtd e
-	ggc = . gtd cd
+	ggcd = . gtd cd
+	ggmd = gtd mkdir
+	ggmv = gtd mv
