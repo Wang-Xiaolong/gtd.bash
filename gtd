@@ -744,7 +744,31 @@ gtd_alias() {
 		return
 	fi
 	for exp in "$@"; do
-		echo $exp
+		[[ "$exp" != [0-9]*=* ]] && \
+		  echo "$exp is not an alias express" && continue
+		IFS='=' read -ra PARTS <<< "$exp"
+		local id=${PARTS[0]};
+		local ali=${PARTS[1]};
+		local path=$(str2path "$id")
+		[ -z "$path" ] && echo "ID $id not found." && continue
+		local bn=$(basename "$path")
+		local dir=$(dirname "$path")
+		if [ -z "$ali" ]; then # remove alias
+			if [[ "$bn" != *.alias=* ]]; then
+				echo "$id already has no alias."
+				continue
+			fi
+			bn=$(echo $bn | sed -e "s/\.alias=.*\./\./")
+		elif [[ "$bn" == *.alias=* ]]; then # change alias
+			debug "change bn=$bn"
+			bn=$(echo $bn | sed -e "s/\.alias=.*\./\.alias=$ali\./")
+			debug "after bn=$bn"
+		else # add alias
+			bn=$(echo $bn | sed -e \
+			  "s/\(\.id=[0-9]*\.\)/\1alias=$ali\./")
+		fi
+		echo "${path#$GTD_ROOT}->$bn"
+		mv $path $dir/$bn
 	done
 }
 #=== SHELL =====================================================================
