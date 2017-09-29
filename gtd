@@ -285,7 +285,7 @@ Options:
 
 max_dir_id() {
 	find "$GTD_ROOT" -type f -name ".id=*" -printf "%f\n" \
-	  | grep -o ".id=[0-9]*" | sed -e "s/.id=//" | sort -n | tail -1
+	  | grep -o "\.id=[0-9]*" | sed -e "s/\.id=//" | sort -n | tail -1
 }
 
 gen_new_dir_fn() {
@@ -395,7 +395,7 @@ Options:
 
 max_fid() {
 	find "$GTD_ROOT" -type f -name "[!.]*.id=*" -printf "%f\n" \
-	  | grep -o ".id=[0-9]*" | sed -e "s/.id=//" | sort -n | tail -1
+	  | grep -o "\.id=[0-9]*" | sed -e "s/\.id=//" | sort -n | tail -1
 }
 
 gen_new_fn() {
@@ -597,7 +597,7 @@ list_obj() { # $1=str:dir/file/id/alias
 			else # path is ifile
 				bn="$(basename "$path")"
 				dln="$(echo $bn | \
-				  sed -e "s/.id=\([0-9]*\).*/[\1]/")"
+				  sed -e "s/\.id=\([0-9]*\).*/[\1]/")"
 				h1="$(head -1 "$path")"
 				printf "$1->$dln $h1\n"
 			fi
@@ -606,7 +606,7 @@ list_obj() { # $1=str:dir/file/id/alias
 			bn="$(basename "$1")"
 			if [[ "$bn" == *.id=* ]]; then # GTD file
 				fln="$(echo $bn | sed -e \
-				  "s/\([0-9]*\).id=\([0-9]*\).*/\1 [\2]/")"
+				  "s/\([0-9]*\)\.id=\([0-9]*\)\..*/\1 [\2]/")"
 				h1="$(head -1 "$path")"
 				printf "$1->$fln $h1\n\n"
 			else
@@ -620,12 +620,12 @@ list_obj() { # $1=str:dir/file/id/alias
 		printf "$1->#$rpath "
 		bn="$(basename "$path")"
 		if [[ "$bn" == .id=* ]]; then # ifile
-			dln="$(echo $bn | sed -e "s/.id=\([0-9]*\).*/[\1]/")"
+			dln="$(echo $bn | sed -e "s/\.id=\([0-9]*\)\..*/[\1]/")"
 			printf "$dln $h1\n"
 			list_dir "$(dirname "$path")"
 		else # file
 			fln="$(echo $bn | \
-			  sed -e "s/\([0-9]*\).id=\([0-9]*\).*/\1 [\2]/")"
+			  sed -e "s/\([0-9]*\)\.id=\([0-9]*\)\..*/\1 [\2]/")"
 			printf "$fln $h1\n\n"
 		fi
 	fi
