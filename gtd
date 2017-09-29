@@ -727,29 +727,24 @@ gtd_edit() {
 	[ -z "$editor" ] && return
 	$editor "$fn"
 }
-#=== TEST functions in place ===================================================
-usage_test() {
+#=== ALIAS =====================================================================
+usage_alias() {
 	cat<<-EOF
-Usage: gtd test [OPTION]...
-Internal test of gtd functions.
+Usage: gtd alias [ID=[ALIAS]]...
+Define, undefine or display file or directory aliases.
 
-Options:
-  -o, --option=VALUE  Meaning
+Without arguments, print all aliases defined.
+Otherwise, the file or directory specified by ID is given an ALIAS.
+If ALIAS is empty, the defined alias for ID is removed.
 	EOF
 }
 
-gtd_test() {
-	PARAMS=`getopt -o t: --long task: -n 'gtd.test' -- "$@"`
-	[ $? != 0 ] && echo "Failed parsing the arguments." && return
-	eval set -- "$PARAMS"
-	debug "gtd_test($@)"
-	local task=""
-	while : ; do
-		case "$1" in
-		-t|--task) task="$2" shift 2;; #TODO:support multi task
-		--) shift; break;;
-		*) echo "Unknown option: $1"; return;;
-		esac
+gtd_alias() {
+	if [ $# -eq 0 ]; then # no arg, print aliases
+		return
+	fi
+	for exp in "$@"; do
+		echo $exp
 	done
 }
 #=== SHELL =====================================================================
@@ -773,13 +768,13 @@ process_command() {
 	m|mv|move) shift; [ $help_me == true ] && usage_move || gtd_move "$@";;
 	l|ls|list) shift; [ $help_me == true ] && usage_list || gtd_list "$@";;
 	e|ed|edit) shift; [ $help_me == true ] && usage_edit || gtd_edit "$@";;
+	alias) shift; [ $help_me == true ] && usage_alias || gtd_alias "$@";;
 	shell) [ $in_shell == false ] && gtd_shell "$@"\
 	  || echo "We are already in gtd shell.";;
   	exit) [ $in_shell == true ] && in_shell=false \
 	  || echo "exit is a gtd shell command.";;
   	help) usage;;
 	version) echo "0.02 2017-08-24 paulo.dx@gmail.com";;
-	test) shift; [ $help_me == true ] && usage_test || gtd_test "$@";;
 	*) echo "Incorrect command: $1"; usage;;
 	esac
 	return 0
