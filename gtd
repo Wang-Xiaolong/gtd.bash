@@ -239,12 +239,12 @@ str2path() { # $1=str, could be path, id or alias
 	fi
 }
 
-fs_print_fi() { # fi: file info; $1=fn $2=format=0|1|2|...|v
-  # 0 -- file info only, 1 line
-  # 1 -- file info and 1 content line, 1 or 2 lines
-  # 2+ -- file info and 2+ content line
-  # v -- file info and view all content
-	IFS='.' read -ra PARTS <<< "$1"
+print_obj_info() { # $1=path or gtd file or ifile;
+  # $2=format string, %i=id %a=attr %r=rpath %h=head %t=time
+	local bn=$(basename "$1")
+	local apath="$(cd $(dirname "$1") && pwd)"
+	local rpath="${apath#$GTD_ROOT}"
+	IFS='.' read -ra PARTS <<< "$bn"
 	local ct="${PARTS[0]}" # create time
 	local cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
 	local id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
@@ -745,10 +745,14 @@ gtd_alias() {
 	fi
 	for exp in "$@"; do
 		[[ "$exp" != [0-9]*=* ]] && \
-		  echo "$exp is not an alias express" && continue
+		  echo "$exp is not an alias expression." && continue
 		IFS='=' read -ra PARTS <<< "$exp"
 		local id=${PARTS[0]};
 		local ali=${PARTS[1]};
+		local old="$(find "$GTD_ROOT" -name "*\.alias=$ali\.*")"
+		[ -n "$old" ] && \
+		  echo "Alias $ali already used by ${old#$GTD_ROOT}." \
+		  && continue
 		local path=$(str2path "$id")
 		[ -z "$path" ] && echo "ID $id not found." && continue
 		local bn=$(basename "$path")
