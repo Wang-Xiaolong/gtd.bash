@@ -741,6 +741,11 @@ If ALIAS is empty, the defined alias for ID is removed.
 
 gtd_alias() {
 	if [ $# -eq 0 ]; then # no arg, print aliases
+		while read -r file; do
+			local str="$(echo "$file" | sed -e \
+			  "s/.*\.id=\([0-9]*\)\.alias=\([^.]*\)\..*/\2=\1/")"
+			echo "$str $(head -1 "$file")"
+		done < <(find "$GTD_ROOT" -name "*\.alias=*")
 		return
 	fi
 	for exp in "$@"; do
