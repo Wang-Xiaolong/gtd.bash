@@ -6,7 +6,7 @@ usage() {  #heredoc
 gtd = Getting Things Done
 Collect and manage your ideas, todos, logs and files.
 Usage:
-  . ${BASH_SOURCE[0]} init
+  . ${BASH_SOURCE[0]#$PWD/} init
   gtd [-h|--help|-?]
   gtd <command> [<args>]
 
