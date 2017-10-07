@@ -208,16 +208,16 @@ fx2fx() { # $1="set string"
 }
 
 #=== THE FILE SYSTEM ===========================================================
-# The name of a file contains its attributes, e.g.
-#   20170829103244.id=1001.alias=coding_style.tag=script,todo,closed.txt
-# Attributes are separated by dots '.',
-# The first attribute is the create time, in the format of yyyymmddHHMMSS, e.g.
-#   20170829103244
-# The last attribute is the type or ext of the file, could be anything, e.g.
-#   txt, log, doc, ppt, jpg ... the default created type is mt, the marktree.
-# The attributes in the middle need to be formatted as
-#   attribute=value or attribute=value1,value2,... e.g.
-#   id=1001 or category=home,office,car
+# The GTD file system is located at $GTD_ROOT, with directories and files.
+# A directory could be ordinary or a GTD one.
+# A GTD directory has an 'ifile' under it, with the name:
+# .id=<id>[.alias=<alias>][.<attribute>=<value>][...].marktree
+# So a GTD directory could be located by id or alias.
+# A file could be ordinary or a GTD one.
+# A GTD file has special file name:
+# 20170829103244.id=<id>[.alias=<alias>][.<attribute>=<value>][...].marktree
+# here '20170829103244' is the 'time' property of the file.
+# So a GTD file could also be located by id or alias.
 
 str2path() { # $1=str, could be path, id or alias
   # GTD directory -> ifile path
