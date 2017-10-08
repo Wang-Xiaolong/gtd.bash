@@ -102,7 +102,7 @@ get_config() { # $1=key, $2=section, optional
 #=== INIT ======================================================================
 usage_init() {
 	cat<<-EOF
-Usage: . ${BASH_SOURCE[0]} init
+Usage: . ${BASH_SOURCE[0]#$PWD/} init
 This command should be run in source mode before any other gtd command.
 It will make gtd a command by adding the path of the directory containing
   this script to system PATH.
