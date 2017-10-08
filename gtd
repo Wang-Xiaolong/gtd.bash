@@ -21,6 +21,7 @@ The commands are:
   rm|remove     Remove files or directories.
   ls|list       List the files in a directory.
   edit          Edit a file or a directory.
+  alias         Manipulate the alias of a file or a directory.
 
 You can run 'gtd <command> <-h|--help|-?>' to get the document of each command.
 	EOF
