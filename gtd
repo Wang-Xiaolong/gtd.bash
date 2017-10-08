@@ -335,7 +335,6 @@ Options:
   --template=TEMPLATE   Create from the TEMPLATE.
                         MESSAGE will be ignored when this option used.
   -t, --time=TIME       Create with the file time set to TIME.
-  -s, --set=SETTING     Create with the SETTINGs.
 	EOF
 }
 
@@ -357,14 +356,14 @@ gen_new_fn() {
 }
 
 gtd_add() {
-	PARAMS=`getopt -o d:e:f:t:s: \
-	  --long dir:,editor:,file:,template:,time:,set: \
+	PARAMS=`getopt -o d:e:f:t: \
+	  --long dir:,editor:,file:,template:,time: \
 	  -n 'gtd.add' -- "$@"`
 	[ $? -ne 0 ] && echo "Failed parsing the arguments." && return
 	eval set -- "$PARAMS"
 	debug "gtd_add($@)"
 	local dir=""; local editor=""; local file=""; local template=""
-	local time=""; local settings=();
+	local time="";
 	while : ; do
 		case "$1" in
 		-d|--dir) dir="$2"; shift 2;;
@@ -372,7 +371,6 @@ gtd_add() {
 		-f|--file) file="$2"; shift 2;;
 		--template) template="$2"; shift 2;;
 		-t|--time) time="$2"; shift 2;;
-		-s|--set) settins+="$2"; shift 2;;
 		--) shift; break;;
 		*) echo "Unknown option: $1"; return;;
 		esac
