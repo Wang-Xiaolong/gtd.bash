@@ -576,9 +576,9 @@ gtd_list() {
 #=== Edit =====================================================================
 usage_edit() {
 	cat<<-EOF
-Usage: gtd edit [OPTION]... <id or alias>
-Edit a file with a specified editor.
-The file is specified by its id or alias.
+Usage: gtd edit [OPTION]... FILE
+Edit FILE(could also be a directory) with the specified editor.
+The file/directory is specified by its path, id or alias.
 The editor can be specified with the following method (sorted by priority):
   1. Use option -e or --editor
   2. Use GTD_EDITOR variable
