@@ -15,11 +15,12 @@ The commands are:
   help          Show this document.
   init          Make the gtd command available.
   cd            Change the working directory.
-  add           Add a new file to the library.
-  md|mkdir      Add new directories to the library.
-  rm|remove     Remove files or directories from the library.
-  ls|list       List files in the library.
-  edit          Edit a file or a directory in the library.
+  add           Add a new file.
+  md|mkdir      Add new directories.
+  mv|move       Move files or directories into another directory.
+  rm|remove     Remove files or directories.
+  ls|list       List the files in a directory.
+  edit          Edit a file or a directory.
 
 You can run 'gtd <command> <-h|--help|-?>' to get the document of each command.
 	EOF
