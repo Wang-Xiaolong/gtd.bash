@@ -160,56 +160,6 @@ gtd_init() {
 		  "to refer GTD working directory."
 	fi
 }
-#=== FILE ======================================================================
-# fn: file name
-# fx: file attributs
-#   ftime
-#   fid
-#   falias
-#   fparent
-#   fdep
-#   fname
-#   ftype
-#   fattr[]
-fn2fx() { # $1=fn; output: ftime, fid, ftype, fattr[]
-	debug "fn2fx($1)"
-	local PARTS, part
-	IFS='.' read -ra PARTS <<< "$1"
-	ftime=${PARTS[0]}; debug "ftime=$ftime"
-	fid=${PARTS[1]:3}; debug "fid=$fid" # :3 to bypass id=
-	ftype=${PARTS[-1]}; debug "ftype=$ftype"
-	local attr_cnt=${#PARTS[@]}
-	if [ $attr_cnt -le 3 ]; then
-		debug "attr_cnt=$attr_cnt, no additional attributes."
-		return
-	fi
-	attr_cnt=$attr_cnt-3
-	for part in "${PARTS[@]:2:$attr_cnt}"; do # get all other fields
-		fattr+=("$part")
-	done
-	debug "fattr: ${fattr[@]}"
-}
-
-fx2fn() { # input: ftime, fid, ftype, fattr[]; output: echo fn
-	local fn="$ftime.id=$fid"
-	for attr in "${fattr[@]}"; do
-		fn="$fn.$attr"
-	done
-	fn="$fn.$ftype"
-	echo "$fn"
-}
-
-#debug=true
-#ftime=fid=ftype=""
-#fattr=()
-#fn2fx "11.id=12.pr=13.dep=14.name=hello.marktree"
-#fx2fn
-#exit
-
-fx2fx() { # $1="set string"
-	return
-}
-
 #=== THE FILE SYSTEM ===========================================================
 # The GTD file system is located at $GTD_ROOT, with directories and files.
 # A directory could be ordinary or a GTD one.
