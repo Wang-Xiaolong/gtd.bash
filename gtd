@@ -9,16 +9,19 @@ Usage:
   . ${BASH_SOURCE[0]#$PWD/} init
   gtd [-h|--help|-?]
   gtd <command> [<args>]
+  . gtd cd DIR
 
-The most commonly used gtd commands are:
-  init		Make the gtd command available.
-  cd		Change the working directory.
-  add		Add a new file to the library.
-  md|mkdir	Add a new directory to the library.
-  rm|remove	Remove files from the library.
-  ls|list	List files in the library.
-  edit		Edit a file in the library.
-  set		Set the attributes of a file in the library.
+The commands are:
+  help          Show this document.
+  init          Make the gtd command available.
+  cd            Change the working directory.
+  add           Add a new file to the library.
+  md|mkdir      Add new directories to the library.
+  rm|remove     Remove files or directories from the library.
+  ls|list       List files in the library.
+  edit          Edit a file or a directory in the library.
+
+You can run 'gtd <command> <-h|--help|-?>' to get the document of each command.
 	EOF
 }
 
@@ -28,7 +31,7 @@ vecho() { [ $verbose == true ] && echo "$@"; }
 # only "$@" can trans args properly, $@/$*/"$*" can't.
 str_trim() { echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
-#==- CONFIG: .gtdrc ============================================================
+#=== CONFIG: .gtdrc ============================================================
 usage_config() {
 	cat<<-EOF
 You can write a .gtdrc config file in the directory of this script to store
@@ -353,7 +356,7 @@ gtd_mkdir() {
 #=== CD/CHDIR ==================================================================
 usage_cd() {
 	cat<<-EOF
-Usage: . $0 cd DIR
+Usage: . gtd cd DIR
 Change the working directory to DIR. Should be run in source mode.
 	EOF
 }
