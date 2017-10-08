@@ -801,7 +801,6 @@ if [[ $help_me == false && "$1" != init && "$1" != cd ]]; then
 fi
 
 [ -z $(command -v getopt) ] && echo "No getopt command." && exit 1
-#TODO: give the user some hint to find the package containing the getopt cmd
 process_command "${args[@]}"
 #=== Template ==================================================================
 usage_template() {
