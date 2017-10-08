@@ -164,13 +164,13 @@ gtd_init() {
 # The GTD file system is located at $GTD_ROOT, with directories and files.
 # A directory could be ordinary or a GTD one.
 # A GTD directory has an 'ifile' under it, with the name:
-# .id=<id>[.alias=<alias>][.<attribute>=<value>][...].marktree
-# So a GTD directory could be located by id or alias.
+# .id=<id>[.alias=<alias>].marktree
+# So a GTD directory could be located by its id or alias.
 # A file could be ordinary or a GTD one.
 # A GTD file has special file name:
-# 20170829103244.id=<id>[.alias=<alias>][.<attribute>=<value>][...].marktree
-# here '20170829103244' is the 'time' property of the file.
-# So a GTD file could also be located by id or alias.
+# 20170829103244.id=<id>[.alias=<alias>].marktree
+# here '20170829103244' is the 'time' of the file in yyyymmddhhMMss format.
+# So a GTD file could also be located by its id or alias.
 
 str2path() { # $1=str, could be path, id or alias
   # GTD directory -> ifile path
@@ -190,33 +190,6 @@ str2path() { # $1=str, could be path, id or alias
 	else # $1=alias
 		find "$GTD_ROOT" -type f -name "*.alias=$1.*"
 	fi
-}
-
-print_obj_info() { # $1=path or gtd file or ifile;
-  # $2=format string, %i=id %a=attr %r=rpath %h=head %t=time
-	local bn=$(basename "$1")
-	local apath="$(cd $(dirname "$1") && pwd)"
-	local rpath="${apath#$GTD_ROOT}"
-	IFS='.' read -ra PARTS <<< "$bn"
-	local ct="${PARTS[0]}" # create time
-	local cts="${ct:0:4}-${ct:4:2}-${ct:6:2} ${ct:8:2}:${ct:10:2}" # ct str
-	local id=`echo "${PARTS[1]}" | cut -d "=" -f 2`
-	local ext="${PARTS[-1]}"
-	local fp=`fs_fn2fp $1` # file path
-	if [ "$2" == "1n" ]; then # put 1n here is improve 1n perf
-		[ "$ext" == "mt" ] && \
-		  n1=`head -n1 "$fp" | sed 's/<mt.*>//g'` \
-		  || n1="[$ext]"
-		echo "[$cts] $id: $n1"
-		return
-	fi
-
-	case "$2" in
-	2n) echo ;;
-	8n) echo ;;
-	full) echo ;;
-	*) echo "Wrong fs_print_fi arg2: $2"; exit 1;;
-	esac
 }
 #=== MD/MKDIR ==================================================================
 usage_mkdir() {
