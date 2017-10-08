@@ -15,12 +15,12 @@ The commands are:
   help          Show this document.
   init          Make the gtd command available.
   cd            Change the working directory.
-  add           Add a new file.
+  a|add         Add a new file.
   md|mkdir      Add new directories.
-  mv|move       Move files or directories into another directory.
+  m|mv|move     Move files or directories into another directory.
   rm|remove     Remove files or directories.
-  ls|list       List the files in a directory.
-  edit          Edit a file or a directory.
+  l|ls|list     List the files in a directory.
+  e|ed|edit     Edit a file or a directory.
   alias         Manipulate the alias of a file or a directory.
 
 You can run 'gtd <command> <-h|--help|-?>' to get the document of each command.
